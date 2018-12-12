@@ -1,0 +1,109 @@
+<html>
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0 user-scalable=yes"/>
+    <link href="/main.css" rel="stylesheet" type="text/css">
+    <link href="/codehighlight.css" rel="stylesheet" type="text/css">
+    <link rel="alternate" type="application/atom+xml" href="/atom.xml" title="Atom feed">
+    <link rel="shortcut icon" href="/images/logo.bmp">
+    <title></title>
+</head>
+<body>
+  <div class="content">
+  <h2>python的异步编程</h2>
+
+<p>如果一个函数中使用了yield关键字,那么他就成了特殊的generator对象.</p>
+
+<p><img src="http://aosabook.org/en/500L/crawler-images/generator.png" alt="'内存分布'" /></p>
+
+<p>一个generator的Code和Frame都是放在堆上的, 所以可以很方便的更改, 任何时候都能停下来,或者接着执行.</p>
+
+<p>Frame的有个lasti(last instruction)变量, 就是用来标识流程执行到了哪里. 如果还没开始为-1.</p>
+
+<h3>yield from</h3>
+
+<p>yield from iterator was (essentially) equivalent to:</p>
+
+<div class="codehilite"><pre><span></span><code><span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">iterator</span><span class="p">:</span>
+    <span class="k">yield</span> <span class="n">x</span>
+</code></pre></div>
+
+<p>举一个栗子:</p>
+
+<p>Future class 的特殊之处就在于, yield from future, 只要future还没有准备好,就会一直yield在这里,实现如下</p>
+
+<div class="codehilite"><pre><span></span><code><span class="c1"># Method on Future class.</span>
+<span class="k">def</span> <span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="c1"># Tell Task to resume me here.</span>
+    <span class="k">while</span> <span class="bp">True</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ready</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">result</span>
+        <span class="k">yield</span> <span class="bp">self</span>
+</code></pre></div>
+
+<h3>send(), 发送信息给协程</h3>
+
+<div class="codehilite"><pre><span></span><code><span class="k">def</span> <span class="nf">jumping_range</span><span class="p">(</span><span class="n">up_to</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Generator for the sequence of integers from 0 to up_to, exclusive.</span>
+
+<span class="sd">    Sending a value into the generator will shift the sequence by that amount.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">index</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">while</span> <span class="n">index</span> <span class="o">&lt;</span> <span class="n">up_to</span><span class="p">:</span>
+        <span class="n">jump</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">index</span>
+        <span class="k">if</span> <span class="n">jump</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">jump</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="n">index</span> <span class="o">+=</span> <span class="n">jump</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">iterator</span> <span class="o">=</span> <span class="n">jumping_range</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+    <span class="k">print</span><span class="p">(</span><span class="nb">next</span><span class="p">(</span><span class="n">iterator</span><span class="p">))</span>  <span class="c1"># 0</span>
+    <span class="k">print</span><span class="p">(</span><span class="n">iterator</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>  <span class="c1"># 2</span>
+    <span class="k">print</span><span class="p">(</span><span class="nb">next</span><span class="p">(</span><span class="n">iterator</span><span class="p">))</span>  <span class="c1"># 3</span>
+    <span class="k">print</span><span class="p">(</span><span class="n">iterator</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>  <span class="c1"># 2</span>
+    <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">iterator</span><span class="p">:</span>
+        <span class="k">print</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>  <span class="c1"># 3, 4</span>
+</code></pre></div>
+
+<p>iterrator.send(None) is equal to next(iterator)</p>
+
+<h3>async and await</h3>
+
+<p>为了将<code>generator</code>和<code>coroutine</code>分开,我们将<code>coroutine</code>标记成这个样子</p>
+
+<pre><code>import types
+
+@types.coroutine
+def coroutine():
+    yield
+</code></pre>
+
+<p>而<code>async</code>和<code>await</code>的加入更加明确了什么是<code>coroutine</code>, 只有使用了这两个关键字的才是协程,完全与<code>yield</code>分开了 比如<code>inspect.iscoroutine()</code>会严格的检查<code>async</code>是否被使用.</p>
+
+<p>而<code>await</code>和<code>yield from</code>及其相似, 同样也是规范化了定义, 当你<code>await</code>什么东西的时候, 实际上是在调用<code>object.__await__</code>这个钩子函数, 而不是<code>__iter__</code>,python 设计原则就是一个关键字只有一个作用). </p>
+
+<h2>协程, 说到底是用来协作的</h2>
+
+<p>那怎么协作呢? 事件循环.</p>
+
+<p>loop开启, 检查若干个队列, 先检查io, time等等这些功能队列, 发现有能执行的任务放到ready队列中.
+然后从ready队列中pop出一个任务.执行一次,此时如果该任务在内部写了yield就会将执行权还给loop, 就像函数执行完成了一样(只不过没有进出栈), loop会:</p>
+
+<ol>
+<li>看看这个协程结束了没有(有没有raise stopIterator),如果结束了,做一些收尾工作,处理返回值</li>
+<li>没结束拿到协程的返回值(hack的玩法就是通过抛出一个特殊的object, 然后在主循环进行一些处理, 主循环相当于操作系统, 特殊的object就是系统接口), 这个返回值相当于协程给loop一个信号,标识下一步想要怎么做.</li>
+</ol>
+
+  </div>
+</body>
+<!-- Global Site Tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-106796420-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments)};
+  gtag('js', new Date());
+  gtag('config', 'UA-106796420-1');
+</script>
+
+</html>

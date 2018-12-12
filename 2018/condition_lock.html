@@ -1,0 +1,102 @@
+<html>
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0 user-scalable=yes"/>
+    <link href="/main.css" rel="stylesheet" type="text/css">
+    <link href="/codehighlight.css" rel="stylesheet" type="text/css">
+    <link rel="alternate" type="application/atom+xml" href="/atom.xml" title="Atom feed">
+    <link rel="shortcut icon" href="/images/logo.bmp">
+    <title></title>
+</head>
+<body>
+  <div class="content">
+  <h2>事件等待器和条件变量</h2>
+
+<p>条件变量本质上是对休眠/唤醒功能的封装. 替代实现可以轮训,只不过效率不高.而条件变量可以无竞争的使线程工作.</p>
+
+<h3>条件</h3>
+
+<p><code>条件</code>是一个可以结果为bool的表达式, 而条件变量是通知<code>条件</code>改变的方式. </p>
+
+<p><code>条件</code>是谓词, 比如队列是不是空, 状态值是不是1.</p>
+
+<p>注意: 条件变量一定是需要和一个条件一起使用的,凡是没有<code>条件</code>只使用条件变量函数的用法一定是错的.</p>
+
+<p>很多人都没有注意到这一点, 这套接口的范式就得这样用才能保证各种情况的正确性.</p>
+
+<h3>wait 调用非常复杂</h3>
+
+<p>条件变量的接口<code>pthread_cond_wait(&amp;cond_, &amp;mutex_)</code>非常的反人类:</p>
+
+<ol>
+<li>需要一个已经锁定了的mutex,  因为要配合条件使用,需要在确保<code>条件</code>没有发生变化的前提下执行等待,.</li>
+<li>有 spurious wakeup的副作用</li>
+<li><code>wait</code>必须在<code>notify</code>之前,否则得不到通知,也就是说是边缘触发的,只通知一次.</li>
+<li>内部会将本线程放到全局条件队列里,然后释放锁,开始休眠,等到被唤醒的之后,在重新拿到锁.</li>
+</ol>
+
+<h3>spurious wakeup</h3>
+
+<p>spurious wakeup 指的是一次 signal() 调用唤醒两个或以上 wait()ing 的线程，或者没有调用 signal() 却有线程从 wait() 返回。</p>
+
+<h3>正确的使用方法</h3>
+
+<p>演示一种多线程个线程等待一个事件发生的函数, 线程可以并发的调用<code>wait</code>和<code>signal</code>而不会有任何问题, 需要注意的是,<code>signal</code>之后,<code>wait</code>永远不会在阻塞.</p>
+
+<div class="codehilite"><pre><span></span><code><span class="k">class</span> <span class="nc">Waiter4</span> <span class="o">:</span> <span class="k">private</span> <span class="n">WaiterBase</span>
+<span class="p">{</span>
+ <span class="k">public</span><span class="o">:</span>
+  <span class="kt">void</span> <span class="n">wait</span><span class="p">()</span>
+  <span class="p">{</span>
+    <span class="n">CHECK_SUCCESS</span><span class="p">(</span><span class="n">pthread_mutex_lock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">mutex_</span><span class="p">));</span>
+    <span class="k">while</span> <span class="p">(</span><span class="o">!</span><span class="n">signaled_</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="n">CHECK_SUCCESS</span><span class="p">(</span><span class="n">pthread_cond_wait</span><span class="p">(</span><span class="o">&amp;</span><span class="n">cond_</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">mutex_</span><span class="p">));</span>
+    <span class="p">}</span>
+    <span class="n">CHECK_SUCCESS</span><span class="p">(</span><span class="n">pthread_mutex_unlock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">mutex_</span><span class="p">));</span>
+  <span class="p">}</span>
+
+  <span class="kt">void</span> <span class="n">signal</span><span class="p">()</span>
+  <span class="p">{</span>
+    <span class="n">CHECK_SUCCESS</span><span class="p">(</span><span class="n">pthread_mutex_lock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">mutex_</span><span class="p">));</span>
+    <span class="n">signaled_</span> <span class="o">=</span> <span class="nb">true</span><span class="p">;</span>
+    <span class="n">CHECK_SUCCESS</span><span class="p">(</span><span class="n">pthread_cond_broadcast</span><span class="p">(</span><span class="o">&amp;</span><span class="n">cond_</span><span class="p">));</span>
+    <span class="n">CHECK_SUCCESS</span><span class="p">(</span><span class="n">pthread_mutex_unlock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">mutex_</span><span class="p">));</span>
+  <span class="p">}</span>
+
+ <span class="k">private</span><span class="o">:</span>
+  <span class="kt">bool</span> <span class="n">signaled_</span> <span class="o">=</span> <span class="nb">false</span><span class="p">;</span>
+<span class="p">};</span>
+</code></pre></div>
+
+<p>如果我们没有<code>signaled_</code>这个谓词, 那么先调用<code>signal</code>在调用<code>wait</code>就会丢掉信号,对变量进行操作自然是要加锁的.</p>
+
+<p>用while不能用if的原因是wait可能被意外唤醒,即并没有发生真正的条件变量改变就被唤醒了.</p>
+
+<p><code>pthread_cond_broadcast</code> 和 <code>pthread_cond_signal</code> 可以放在锁里,也可以放在锁外.这个是没有影响的.</p>
+
+<h3>后记</h3>
+
+<p>使用条件变量，调用 signal() 的时候无法知道是否已经有线程等待在 wait() 上。因此一般总是要先修改<code>条件</code>(储存变化的发生)，使其为 true，再调用 signal()；这样 wait 线程先检查“条件”，只有当条件不成立时才去 wait()，避免了丢事件的可能。换言之，通过使用<code>条件</code>，将边沿触发（edge trigger）改为电平触发（level trigger）。这里“修改条件”和“检查条件”都必须在 mutex 保护下进行，而且这个 mutex 必须用于配合 wait()。</p>
+
+<h3>资源</h3>
+
+<p>chensuo写的常见版本,并给出了正确和错误的原因: </p>
+
+<ol>
+<li><a href="https://gist.github.com/chenshuo/6430925">代码</a> </li>
+<li><a href="http://www.cppblog.com/Solstice/archive/2013/09/09/203094.html">文章</a></li>
+</ol>
+
+  </div>
+</body>
+<!-- Global Site Tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-106796420-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments)};
+  gtag('js', new Date());
+  gtag('config', 'UA-106796420-1');
+</script>
+
+</html>

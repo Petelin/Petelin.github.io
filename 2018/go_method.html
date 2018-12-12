@@ -1,0 +1,111 @@
+<html>
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0 user-scalable=yes"/>
+    <link href="/main.css" rel="stylesheet" type="text/css">
+    <link href="/codehighlight.css" rel="stylesheet" type="text/css">
+    <link rel="alternate" type="application/atom+xml" href="/atom.xml" title="Atom feed">
+    <link rel="shortcut icon" href="/images/logo.bmp">
+    <title></title>
+</head>
+<body>
+  <div class="content">
+  <h2>Go 方法集问题</h2>
+
+<p>go 语言方法定义和其他语言有很大的不同，调用一个 struct 的 method 实际上会被转化为对一个 func 进行调用，而所谓的函数接受者就是 function 的第一个参数。</p>
+
+<h3>backgroud</h3>
+
+<div class="codehilite"><pre><span></span><code><span class="kn">package</span> <span class="nx">main</span>
+
+<span class="kn">import</span> <span class="p">(</span>
+    <span class="s">&quot;fmt&quot;</span>
+
+    <span class="s">&quot;github.com/aws/aws-sdk-go/aws&quot;</span>
+<span class="p">)</span>
+
+<span class="kd">type</span> <span class="nx">A</span> <span class="kd">struct</span> <span class="p">{</span>
+    <span class="nx">name</span> <span class="o">*</span><span class="kt">string</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="p">(</span><span class="nx">a</span> <span class="nx">A</span><span class="p">)</span> <span class="nx">foo</span><span class="p">()</span> <span class="p">{</span>
+    <span class="nx">fmt</span><span class="p">.</span><span class="nx">Println</span><span class="p">(</span><span class="s">&quot;foo&quot;</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="p">(</span><span class="nx">a</span> <span class="o">*</span><span class="nx">A</span><span class="p">)</span> <span class="nx">bar</span><span class="p">()</span> <span class="p">{</span>
+    <span class="nx">fmt</span><span class="p">.</span><span class="nx">Println</span><span class="p">(</span><span class="s">&quot;bar&quot;</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<p>我们的定义一个 A 结构，他有两个方法<code>foo</code> 和<code>bar</code> ，对于 <code>foo</code>每次调用的时候，都会完整复制结构体 <code>A</code> 的内存，对这个新的结构体在调用 <code>A</code>。而 <code>bar</code> 方法则是复制指针的值然后调用。</p>
+
+<h3>pointer or structer?</h3>
+
+<p>本来，对于 <code>a</code>只能调用 <code>foo</code>,对于<code>b</code>只能调用 <code>bar</code>,但是编译器在方法调用的时候回进行判断，允许我们简写结构体调用指针方法，以及指针调用结构体方法这两种行为。</p>
+
+<div class="codehilite"><pre><span></span><code><span class="kd">func</span> <span class="nx">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="nx">a</span> <span class="o">:=</span> <span class="nx">A</span><span class="p">{</span><span class="nx">name</span><span class="p">:</span> <span class="nx">aws</span><span class="p">.</span><span class="nx">String</span><span class="p">(</span><span class="s">&quot;A&quot;</span><span class="p">)}</span>
+    <span class="nx">b</span> <span class="o">:=</span> <span class="o">&amp;</span><span class="nx">A</span><span class="p">{</span><span class="nx">name</span><span class="p">:</span> <span class="nx">aws</span><span class="p">.</span><span class="nx">String</span><span class="p">(</span><span class="s">&quot;B&quot;</span><span class="p">)}</span>
+    <span class="c1">// normal function</span>
+    <span class="nx">a</span><span class="p">.</span><span class="nx">foo</span><span class="p">()</span>
+
+    <span class="nx">a</span><span class="p">.</span><span class="nx">bar</span><span class="p">()</span> <span class="c1">// equal to (&amp;a).bar()</span>
+    <span class="c1">// actually do &amp;a,</span>
+    <span class="c1">// not work if a can not address, for example map[0].bar()</span>
+
+    <span class="c1">// normal function</span>
+    <span class="nx">b</span><span class="p">.</span><span class="nx">bar</span><span class="p">()</span>
+
+    <span class="nx">b</span><span class="p">.</span><span class="nx">foo</span><span class="p">()</span> <span class="c1">// equal to (*b).foo()</span>
+    <span class="c1">// actually use *b, and method will copy *b</span>
+    <span class="c1">// not work if a is nil, since you can not got the object after nil</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<p>结构体调用指针方法在取不到结构体对应指针的时候调用会失败，比如<code>map</code>里的结构体</p>
+
+<p>指针为<code>nil</code>的时候无法调用结构体方法, 但是可以调用指针方法</p>
+
+<h3>方法集概念</h3>
+
+<p>看起来接受者是结构体还是指针并没有多少区别, 那么为什么书上要说</p>
+
+<blockquote>
+  <p>指针的方法集是全部的方法</p>
+  
+  <p>结构体集是结构体接收者方法</p>
+</blockquote>
+
+<p>因为在go里可以将一个方法转化为函数</p>
+
+<div class="codehilite"><pre><span></span><code><span class="kd">func</span> <span class="nx">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="c1">// we have a concept name: method collection</span>
+    <span class="c1">// A only have receive struct method</span>
+    <span class="c1">// *A have receive struct method and pointer method</span>
+    <span class="nx">Foo</span> <span class="o">:=</span> <span class="nx">A</span><span class="p">.</span><span class="nx">foo</span>
+
+    <span class="nx">Foo2</span> <span class="o">:=</span> <span class="p">(</span><span class="o">*</span><span class="nx">A</span><span class="p">).</span><span class="nx">foo</span>
+    <span class="nx">Bar</span> <span class="o">:=</span> <span class="p">(</span><span class="o">*</span><span class="nx">A</span><span class="p">).</span><span class="nx">bar</span>
+
+    <span class="nx">Foo</span><span class="p">(</span><span class="nx">a</span><span class="p">)</span>
+    <span class="nx">Bar</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">a</span><span class="p">)</span>
+
+    <span class="nx">Foo2</span><span class="p">(</span><span class="nx">b</span><span class="p">)</span>
+    <span class="nx">Bar</span><span class="p">(</span><span class="nx">b</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<p>深入了解之后还是很清楚的,对不对?</p>
+
+  </div>
+</body>
+<!-- Global Site Tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-106796420-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments)};
+  gtag('js', new Date());
+  gtag('config', 'UA-106796420-1');
+</script>
+
+</html>

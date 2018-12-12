@@ -1,0 +1,150 @@
+<html>
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0 user-scalable=yes"/>
+    <link href="/main.css" rel="stylesheet" type="text/css">
+    <link href="/codehighlight.css" rel="stylesheet" type="text/css">
+    <link rel="alternate" type="application/atom+xml" href="/atom.xml" title="Atom feed">
+    <link rel="shortcut icon" href="/images/logo.bmp">
+    <title></title>
+</head>
+<body>
+  <div class="content">
+  <h2>多进程写一个文件时的并发问题</h2>
+
+<p>在思考日志落地问题的时候, 想到多个进程同时写一个文件时,操作系统是否能够保证原子写呢?
+查资料之后发现, 对于大多是系统有一个, write_buffer, 只要每次写请求数量不超过这个buffer且写入模式为append, 文件系统能够保证原子写入. </p>
+
+<p>使用参考资料中的脚本, 测出Macos的buffer为1024, 超过之后会发现, 每一行字符数量字符内容都会出现问题.</p>
+
+<p>参考资料:  </p>
+
+<ol>
+<li><a href="https://stackoverflow.com/questions/1154446/is-file-append-atomic-in-unix">stackoverflow</a></li>
+<li>开启20个进程写同一个文件, 然后检测是否正确, 脚本取自链接一的一个答案, 修正了测试内容.</li>
+</ol>
+
+<div class="codehilite"><pre><span></span><code><span class="ch">#!/bin/bash</span>
+
+<span class="c1">#############################################################################</span>
+<span class="c1">#</span>
+<span class="c1"># This script aims to test/prove that you can append to a single file from</span>
+<span class="c1"># multiple processes with buffers up to a certain size, without causing one</span>
+<span class="c1"># process&#39; output to corrupt the other&#39;s.</span>
+<span class="c1">#</span>
+<span class="c1"># The script takes one parameter, the length of the buffer. It then creates</span>
+<span class="c1"># 20 worker processes which each write 50 lines of the specified buffer</span>
+<span class="c1"># size to the same file. When all processes are done outputting, it tests</span>
+<span class="c1"># the output file to ensure it is in the correct format.</span>
+<span class="c1">#</span>
+<span class="c1">#############################################################################</span>
+
+<span class="nv">NUM_WORKERS</span><span class="o">=</span><span class="m">20</span>
+<span class="nv">LINES_PER_WORKER</span><span class="o">=</span><span class="m">50</span>
+<span class="nv">OUTPUT_FILE</span><span class="o">=</span>/tmp/out.tmp
+
+<span class="c1"># each worker will output $LINES_PER_WORKER lines to the output file</span>
+run_worker<span class="o">()</span> <span class="o">{</span>
+    <span class="nv">worker_num</span><span class="o">=</span><span class="nv">$1</span>
+    <span class="nv">buf_len</span><span class="o">=</span><span class="nv">$2</span>
+
+    <span class="c1"># Each line will be a specific character, multiplied by the line length.</span>
+    <span class="c1"># The character changes based on the worker number.</span>
+    <span class="nv">filler_len</span><span class="o">=</span><span class="k">$((</span><span class="si">${</span><span class="nv">buf_len</span><span class="si">}</span><span class="o">-</span><span class="m">1</span><span class="k">))</span> <span class="c1"># -1 -&gt; leave room for \n</span>
+    <span class="nv">filler_char</span><span class="o">=</span><span class="k">$(</span><span class="nb">printf</span> <span class="se">\\</span><span class="k">$(</span><span class="nb">printf</span> <span class="s1">&#39;%03o&#39;</span> <span class="k">$((</span><span class="nv">$worker_num</span><span class="o">+</span><span class="m">64</span><span class="k">))))</span>
+    <span class="nv">line</span><span class="o">=</span><span class="sb">`</span><span class="k">for</span> i in <span class="k">$(</span>seq <span class="m">1</span> <span class="nv">$filler_len</span><span class="k">)</span><span class="p">;</span><span class="k">do</span> <span class="nb">echo</span> -n <span class="nv">$filler_char</span><span class="p">;</span><span class="k">done</span><span class="sb">`</span>
+    <span class="k">for</span> i in <span class="k">$(</span>seq <span class="m">1</span> <span class="nv">$LINES_PER_WORKER</span><span class="k">)</span>
+    <span class="k">do</span>
+        <span class="nb">echo</span> <span class="nv">$line</span> &gt;&gt; <span class="nv">$OUTPUT_FILE</span>
+    <span class="k">done</span>
+<span class="o">}</span>
+
+<span class="k">if</span> <span class="o">[</span> <span class="s2">&quot;</span><span class="nv">$1</span><span class="s2">&quot;</span> <span class="o">=</span> <span class="s2">&quot;worker&quot;</span> <span class="o">]</span><span class="p">;</span> <span class="k">then</span>
+    run_worker <span class="nv">$2</span> <span class="nv">$3</span>
+    <span class="nb">exit</span>
+<span class="k">fi</span>
+
+<span class="nv">buf_len</span><span class="o">=</span><span class="nv">$1</span>
+<span class="k">if</span> <span class="o">[</span> <span class="s2">&quot;</span><span class="nv">$buf_len</span><span class="s2">&quot;</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span> <span class="o">]</span><span class="p">;</span> <span class="k">then</span>
+    <span class="nb">echo</span> <span class="s2">&quot;Buffer length not specified, defaulting to 4096&quot;</span>
+    <span class="nv">buf_len</span><span class="o">=</span><span class="m">4096</span>
+<span class="k">fi</span>
+
+rm -f <span class="nv">$OUTPUT_FILE</span>
+
+<span class="nb">echo</span> Launching <span class="nv">$NUM_WORKERS</span> worker processes
+<span class="k">for</span> i in <span class="k">$(</span>seq <span class="m">1</span> <span class="nv">$NUM_WORKERS</span><span class="k">)</span>
+<span class="k">do</span>
+    <span class="nv">$0</span> worker <span class="nv">$i</span> <span class="nv">$buf_len</span> <span class="p">&amp;</span>
+    pids<span class="o">[</span><span class="nv">$i</span><span class="o">]=</span><span class="si">${</span><span class="p">!</span><span class="si">}</span>
+<span class="k">done</span>
+
+<span class="nb">echo</span> Each line will be <span class="nv">$buf_len</span> characters long
+<span class="nb">echo</span> Waiting <span class="k">for</span> processes to <span class="nb">exit</span>
+<span class="k">for</span> i in <span class="k">$(</span>seq <span class="m">1</span> <span class="nv">$NUM_WORKERS</span><span class="k">)</span>
+<span class="k">do</span>
+    <span class="nb">wait</span> <span class="si">${</span><span class="nv">pids</span><span class="p">[</span><span class="nv">$i</span><span class="p">]</span><span class="si">}</span>
+<span class="k">done</span>
+
+<span class="c1"># Now we want to test the output file. Each line should be the same letter</span>
+<span class="c1"># repeated buf_len-1 times (remember the \n takes up one byte). If we had</span>
+<span class="c1"># workers writing over eachother&#39;s lines, then there will be mixed characters</span>
+<span class="c1"># and/or longer/shorter lines.</span>
+
+<span class="nb">echo</span> Testing output file
+
+<span class="c1"># Make sure the file is the right size (ensures processes didn&#39;t write over</span>
+<span class="c1"># eachother&#39;s lines)</span>
+<span class="nv">expected_file_size</span><span class="o">=</span><span class="k">$((</span><span class="nv">$NUM_WORKERS</span> <span class="o">*</span> <span class="nv">$LINES_PER_WORKER</span> <span class="o">*</span> <span class="nv">$buf_len</span><span class="k">))</span>
+<span class="nv">actual_file_size</span><span class="o">=</span><span class="sb">`</span>cat <span class="nv">$OUTPUT_FILE</span> <span class="p">|</span> wc -c<span class="sb">`</span>
+<span class="k">if</span> <span class="o">[</span> <span class="s2">&quot;</span><span class="nv">$expected_file_size</span><span class="s2">&quot;</span> -ne <span class="s2">&quot;</span><span class="nv">$actual_file_size</span><span class="s2">&quot;</span> <span class="o">]</span><span class="p">;</span> <span class="k">then</span>
+    <span class="nb">echo</span> Expected file size of <span class="nv">$expected_file_size</span>, but got <span class="nv">$actual_file_size</span>
+<span class="k">else</span>
+
+    <span class="c1"># File size is OK, test the actual content</span>
+
+    <span class="c1"># Only use newer versions of grep because older ones are way too slow with</span>
+    <span class="c1"># backreferences</span>
+    <span class="o">[[</span> <span class="k">$(</span>grep --version<span class="k">)</span> <span class="o">=</span>~ <span class="o">[</span>^<span class="o">[</span>:digit:<span class="o">]]</span>*<span class="o">([[</span>:digit:<span class="o">]]</span>+<span class="o">)</span><span class="se">\.</span><span class="o">([[</span>:digit:<span class="o">]]</span>+<span class="o">)</span> <span class="o">]]</span>
+    <span class="nv">grep_ver</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">BASH_REMATCH</span><span class="p">[1]</span><span class="si">}${</span><span class="nv">BASH_REMATCH</span><span class="p">[2]</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="k">if</span> <span class="o">[</span> <span class="s2">&quot;</span><span class="nv">$grep_ver</span><span class="s2">&quot;</span> -ge <span class="s2">&quot;216&quot;</span> <span class="o">]</span><span class="p">;</span> <span class="k">then</span>
+        <span class="nv">num_lines</span><span class="o">=</span><span class="k">$(</span>grep -v <span class="s2">&quot;^\(.\)\1\{</span><span class="k">$((</span><span class="si">${</span><span class="nv">buf_len</span><span class="si">}</span><span class="o">-</span><span class="m">2</span><span class="k">))</span><span class="s2">\}</span>$<span class="s2">&quot;</span> <span class="nv">$OUTPUT_FILE</span> <span class="p">|</span> wc -l<span class="k">)</span>
+    <span class="k">else</span>
+        <span class="c1"># Scan line by line in bash, which isn&#39;t that speedy, but is good enough</span>
+        <span class="c1"># Note: Doesn&#39;t work on cygwin for lines &lt; 255</span>
+        <span class="nv">line_length</span><span class="o">=</span><span class="k">$((</span><span class="si">${</span><span class="nv">buf_len</span><span class="si">}</span><span class="o">-</span><span class="m">1</span><span class="k">))</span>
+        <span class="nv">num_lines</span><span class="o">=</span><span class="m">0</span>
+        <span class="k">for</span> line in <span class="sb">`</span>cat <span class="nv">$OUTPUT_FILE</span><span class="sb">`</span>
+        <span class="k">do</span>
+            <span class="nv">first_char</span><span class="o">=</span><span class="sb">`</span><span class="nb">echo</span> <span class="nv">$line</span> <span class="p">|</span> cut -c2<span class="sb">`</span>
+            <span class="k">if</span> <span class="o">[</span> <span class="sb">`</span><span class="nb">echo</span> <span class="nv">$line</span> <span class="p">|</span>grep <span class="nv">$first_char</span> <span class="p">|</span> wc -c<span class="sb">`</span> !<span class="o">=</span> <span class="si">${</span><span class="nv">buf_len</span><span class="si">}</span> <span class="o">]</span><span class="p">;</span>
+            <span class="k">then</span>
+                <span class="nv">num_lines</span><span class="o">=</span><span class="k">$((</span><span class="nv">$num_lines</span><span class="o">+</span><span class="m">1</span><span class="k">))</span>
+            <span class="k">fi</span><span class="p">;</span>
+            <span class="nb">echo</span> -n .
+        <span class="k">done</span>
+        <span class="nb">echo</span>
+    <span class="k">fi</span>
+
+    <span class="k">if</span> <span class="o">[</span> <span class="s2">&quot;</span><span class="nv">$num_lines</span><span class="s2">&quot;</span> -gt <span class="s2">&quot;0&quot;</span> <span class="o">]</span><span class="p">;</span> <span class="k">then</span>
+        <span class="nb">echo</span> <span class="s2">&quot;Found </span><span class="nv">$num_lines</span><span class="s2"> instances of corrupted lines&quot;</span>
+        <span class="k">else</span>
+        <span class="nb">echo</span> <span class="s2">&quot;All&#39;s good! The output file had no corrupted lines. </span><span class="nv">$size</span><span class="s2">&quot;</span>
+    <span class="k">fi</span>
+<span class="k">fi</span>
+
+rm -f <span class="nv">$OUTPUT_FILE</span>
+</code></pre></div>
+
+  </div>
+</body>
+<!-- Global Site Tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-106796420-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments)};
+  gtag('js', new Date());
+  gtag('config', 'UA-106796420-1');
+</script>
+
+</html>

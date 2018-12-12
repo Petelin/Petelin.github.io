@@ -1,0 +1,50 @@
+<html>
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0 user-scalable=yes"/>
+    <link href="/main.css" rel="stylesheet" type="text/css">
+    <link href="/codehighlight.css" rel="stylesheet" type="text/css">
+    <link rel="alternate" type="application/atom+xml" href="/atom.xml" title="Atom feed">
+    <link rel="shortcut icon" href="/images/logo.bmp">
+    <title></title>
+</head>
+<body>
+  <div class="content">
+  <h2>发送任意格式邮件与sendmail</h2>
+
+<h4>send mail 是什么</h4>
+
+<p><code>sendmail</code> 是一个命令, 同时也是一个有历史的<code>service</code> 你可以 <code>sudo service sendmail restart</code></p>
+
+<p>这个服务的作用是在你本机启动一个SMTP的服务器. 有了这个服务器, 你就可以和其他SMTP服务器交流.</p>
+
+<p>自己搞一个SMTP的好处是,</p>
+
+<ol>
+<li>可以不受限制的发邮件. 我之前使用163的, 发的多了, 就会拦截不让发. </li>
+<li>不用配置账号密码</li>
+<li>可以自定义from地址, 发件人姓名</li>
+</ol>
+
+<h3>因为最近使用go开发所以写了一个调用sendmail的库</h3>
+
+<p>遇到的问题</p>
+
+<p>title不能有中文, 要用<code>echo "=?UTF-8?B?</code>echo 重新启动TRADE系统| base64<code>?="</code> 这样转化一下</p>
+
+<p>sendmail设置header, 使用HTML格式, 是需要从stdin穿进去的, 没有参数可以配置</p>
+
+<p>-f 发件人邮箱, 可以随意配置, 但是QQ的服务会检查你这个合不合法, 有一些域名是绑定了IP, 你不是这个IP的却使用qq.com发邮箱会被拒绝的. </p>
+
+  </div>
+</body>
+<!-- Global Site Tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-106796420-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments)};
+  gtag('js', new Date());
+  gtag('config', 'UA-106796420-1');
+</script>
+
+</html>

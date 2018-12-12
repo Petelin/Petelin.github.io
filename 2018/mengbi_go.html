@@ -1,0 +1,136 @@
+<html>
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0 user-scalable=yes"/>
+    <link href="/main.css" rel="stylesheet" type="text/css">
+    <link href="/codehighlight.css" rel="stylesheet" type="text/css">
+    <link rel="alternate" type="application/atom+xml" href="/atom.xml" title="Atom feed">
+    <link rel="shortcut icon" href="/images/logo.bmp">
+    <title></title>
+</head>
+<body>
+  <div class="content">
+  <h2>Go 的一道题</h2>
+
+<p>翻公司的Go文档, 翻到如何深入学习Go, 然后这帮人一步一步给了很多文档.</p>
+
+<p>其中一道题非常有意思, 只适合面试装逼用. 综合了很多Go的基本概念在里面.</p>
+
+<p>请问这个输出是什么? </p>
+
+<div class="codehilite"><pre><span></span><code><span class="kn">package</span> <span class="nx">main</span>
+
+<span class="kn">import</span> <span class="p">(</span>  
+    <span class="s">&quot;fmt&quot;</span>
+    <span class="s">&quot;time&quot;</span>
+<span class="p">)</span>
+
+<span class="kd">type</span> <span class="nx">field</span> <span class="kd">struct</span> <span class="p">{</span>  
+    <span class="nx">name</span> <span class="kt">string</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="p">(</span><span class="nx">p</span> <span class="o">*</span><span class="nx">field</span><span class="p">)</span> <span class="nb">print</span><span class="p">()</span> <span class="p">{</span>  
+    <span class="nx">fmt</span><span class="p">.</span><span class="nx">Println</span><span class="p">(</span><span class="nx">p</span><span class="p">.</span><span class="nx">name</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="nx">main</span><span class="p">()</span> <span class="p">{</span>  
+    <span class="nx">data</span> <span class="o">:=</span> <span class="p">[]</span><span class="o">*</span><span class="nx">field</span><span class="p">{{</span><span class="s">&quot;one&quot;</span><span class="p">},{</span><span class="s">&quot;two&quot;</span><span class="p">},{</span><span class="s">&quot;three&quot;</span><span class="p">}}</span>
+
+    <span class="k">for</span> <span class="nx">_</span><span class="p">,</span><span class="nx">v</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">data</span> <span class="p">{</span>
+        <span class="k">go</span> <span class="nx">v</span><span class="p">.</span><span class="nb">print</span><span class="p">()</span>
+    <span class="p">}</span>
+
+    <span class="nx">time</span><span class="p">.</span><span class="nx">Sleep</span><span class="p">(</span><span class="mi">3</span> <span class="o">*</span> <span class="nx">time</span><span class="p">.</span><span class="nx">Second</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<ol>
+<li>如果你答 "three", "three", "three", 那么你只考虑了其中一个点.</li>
+<li>如果你觉得这个题很简单就是 1,2,3, 那么你不是Go的高级开发, 就是啥都不会......</li>
+<li>即使你答 "One", "Two", "Three", 那么我还可以偷偷装逼说, Goroutine执行顺序是不一定的.漏了吧...</li>
+</ol>
+
+<p>答案是: 如果在多核机器上执行, 且<code>GOMAXPROCS &gt; 1</code>, 则为不确定顺序的"One", "Two", "Three"</p>
+
+<p>这里面有多少点呢, 我来罗列一下</p>
+
+<ol>
+<li><p><code>for range</code>每次迭代的item, 在下次迭代的时候回重复赋值, 而不是创建一个新的</p></li>
+<li><p>Go的方法集问题, 调用<code>v.print</code>其实就是调用 <code>print(v)</code></p>
+
+<div class="codehilite"><pre><span></span><code><span class="kd">type</span> <span class="nx">field</span> <span class="kd">struct</span> <span class="p">{</span>  
+   <span class="nx">name</span> <span class="kt">string</span>
+<span class="p">}</span>
+<span class="kd">func</span> <span class="p">(</span><span class="nx">p</span> <span class="nx">field</span><span class="p">)</span> <span class="nb">print</span><span class="p">()</span> <span class="p">{</span>
+<span class="nx">fmt</span><span class="p">.</span><span class="nx">Println</span><span class="p">(</span><span class="nx">p</span><span class="p">.</span><span class="nx">name</span><span class="p">)</span>
+<span class="p">}</span>
+<span class="kd">func</span> <span class="nx">main</span><span class="p">()</span> <span class="p">{</span>
+<span class="nx">data</span> <span class="o">:=</span> <span class="p">[]</span><span class="nx">field</span><span class="p">{{</span><span class="s">&quot;one&quot;</span><span class="p">},</span> <span class="p">{</span><span class="s">&quot;two&quot;</span><span class="p">},</span> <span class="p">{</span><span class="s">&quot;three&quot;</span><span class="p">}}</span>
+
+<span class="k">for</span> <span class="nx">_</span><span class="p">,</span> <span class="nx">v</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">data</span> <span class="p">{</span>
+    <span class="k">go</span> <span class="nx">v</span><span class="p">.</span><span class="nb">print</span><span class="p">()</span>   <span class="c1">// 会怎么样?</span>
+<span class="p">}</span>
+
+<span class="nx">time</span><span class="p">.</span><span class="nx">Sleep</span><span class="p">(</span><span class="mi">3</span> <span class="o">*</span> <span class="nx">time</span><span class="p">.</span><span class="nx">Second</span><span class="p">)</span>
+<span class="c1">//goroutines print: one, two, three</span>
+<span class="p">}</span>
+</code></pre></div></li>
+<li><p>Go只有数值传递, 以及编译器会帮你做 &amp;v, 使得你能调用print</p>
+
+<div class="codehilite"><pre><span></span><code><span class="kd">type</span> <span class="nx">field</span> <span class="kd">struct</span> <span class="p">{</span>  
+   <span class="nx">name</span> <span class="kt">string</span>
+<span class="p">}</span>
+<span class="kd">func</span> <span class="p">(</span><span class="nx">p</span> <span class="o">*</span><span class="nx">field</span><span class="p">)</span> <span class="nb">print</span><span class="p">()</span> <span class="p">{</span>  
+   <span class="nx">fmt</span><span class="p">.</span><span class="nx">Println</span><span class="p">(</span><span class="nx">p</span><span class="p">.</span><span class="nx">name</span><span class="p">)</span>
+<span class="p">}</span>
+<span class="kd">func</span> <span class="nx">main</span><span class="p">()</span> <span class="p">{</span>  
+   <span class="nx">data</span> <span class="o">:=</span> <span class="p">[]</span><span class="nx">field</span><span class="p">{{</span><span class="s">&quot;one&quot;</span><span class="p">},{</span><span class="s">&quot;two&quot;</span><span class="p">},{</span><span class="s">&quot;three&quot;</span><span class="p">}}</span>
+
+   <span class="k">for</span> <span class="nx">_</span><span class="p">,</span><span class="nx">v</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">data</span> <span class="p">{</span>
+       <span class="k">go</span> <span class="nx">v</span><span class="p">.</span><span class="nb">print</span><span class="p">()</span>   <span class="c1">// 会怎么样?</span>
+   <span class="p">}</span>
+
+   <span class="nx">time</span><span class="p">.</span><span class="nx">Sleep</span><span class="p">(</span><span class="mi">3</span> <span class="o">*</span> <span class="nx">time</span><span class="p">.</span><span class="nx">Second</span><span class="p">)</span>
+   <span class="c1">//goroutines print: three, three, three</span>
+<span class="p">}</span>
+</code></pre></div></li>
+<li><p>go/defer 关键字会先计算参数的值</p>
+
+<div class="codehilite"><pre><span></span><code><span class="kd">type</span> <span class="nx">field</span> <span class="kd">struct</span> <span class="p">{</span>  
+   <span class="nx">name</span> <span class="kt">string</span>
+<span class="p">}</span>
+<span class="kd">func</span> <span class="p">(</span><span class="nx">p</span> <span class="o">*</span><span class="nx">field</span><span class="p">)</span> <span class="nb">print</span><span class="p">()</span> <span class="p">{</span>  
+   <span class="nx">fmt</span><span class="p">.</span><span class="nx">Println</span><span class="p">(</span><span class="nx">p</span><span class="p">.</span><span class="nx">name</span><span class="p">)</span>
+<span class="p">}</span>
+<span class="kd">func</span> <span class="nx">main</span><span class="p">()</span> <span class="p">{</span>  
+   <span class="nx">data</span> <span class="o">:=</span> <span class="p">[]</span><span class="nx">field</span><span class="p">{{</span><span class="s">&quot;one&quot;</span><span class="p">},{</span><span class="s">&quot;two&quot;</span><span class="p">},{</span><span class="s">&quot;three&quot;</span><span class="p">}}</span>
+
+   <span class="k">for</span> <span class="nx">_</span><span class="p">,</span><span class="nx">v</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">data</span> <span class="p">{</span>
+       <span class="k">go</span> <span class="kd">func</span><span class="p">(){</span><span class="nx">v</span><span class="p">.</span><span class="nb">print</span><span class="p">()}</span> <span class="c1">// 会怎么样?</span>
+   <span class="p">}</span>
+
+   <span class="nx">time</span><span class="p">.</span><span class="nx">Sleep</span><span class="p">(</span><span class="mi">3</span> <span class="o">*</span> <span class="nx">time</span><span class="p">.</span><span class="nx">Second</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre></div></li>
+</ol>
+
+<p>其实这些都是很基础的东西, 放在一起就可以把人搞懵逼. 平时开发, 还是</p>
+
+<p><code>v:=v</code></p>
+
+<p><code>func(v interface{}){}(v)</code> </p>
+
+<p>多用着, 别给自己找麻烦.</p>
+
+  </div>
+</body>
+<!-- Global Site Tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-106796420-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments)};
+  gtag('js', new Date());
+  gtag('config', 'UA-106796420-1');
+</script>
+
+</html>

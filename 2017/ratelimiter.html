@@ -1,0 +1,87 @@
+<html>
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0 user-scalable=yes"/>
+    <link href="/main.css" rel="stylesheet" type="text/css">
+    <link href="/codehighlight.css" rel="stylesheet" type="text/css">
+    <link rel="alternate" type="application/atom+xml" href="/atom.xml" title="Atom feed">
+    <link rel="shortcut icon" href="/images/logo.bmp">
+    <title></title>
+</head>
+<body>
+  <div class="content">
+  <h2>限流, 微服务与go的rate.Limiter</h2>
+
+<h1>限流</h1>
+
+<p>从算法上有两种限流实现:</p>
+
+<h2>令牌桶</h2>
+
+<p>每隔一段时间放到捅中一个令牌, task获取令牌才能执行.
+可以提供一下限制:
+任意时刻最大流量是桶可以容纳的最大token数, 而一秒内可以处理tasks数量可以任意多.(有点类似于并发和并行的区别)</p>
+
+<ol>
+<li><p>这种方式不能避免突然增加的流量. 有可能在一段没有请求的时间之后(积累了一桶的令牌), 下一刻突增流量, 因为token很多, 所以全部并发的被执行.</p></li>
+<li><p>另一方面, 如果流量是源源不断的过来, 桶内的token维持在一个稳定的水平, 突增流量会消耗至桶内没有token, 阻止请求, 等流量下去之后又可以恢复一个平衡.</p></li>
+<li><p>如果我们设置桶容量比较小, 但是加入令牌的速度比较快, 就可以得到一个持续的, 避免掉小高峰的限流器. 比如速度为 100 t/s, 而桶大小为50, 那么任意时刻最大流量是50, 而一秒内可以处理100个请求.</p></li>
+</ol>
+
+<h2>漏桶算法</h2>
+
+<p>规定一个出口速度, 一个桶容量. tasks向水流一样流入, 然后从桶底漏出.</p>
+
+<ol>
+<li>这种算法从原理上讲更适合平滑流量. 规定漏桶出口速度, 那么一定小于这个流量.</li>
+<li>这个算法没办法像令牌桶一样, 在限制最大流量的前提下, 提高处理速度. 因为最大流量和一段时间的流量是绑定的.</li>
+</ol>
+
+<p>漏桶算法可以看作是令牌桶算法的一个特例, 设令牌加入速度和令牌桶容量一样就得到了漏桶算法.</p>
+
+<h2>只限制并行数量</h2>
+
+<p>go 语言可以通过这种方式限制并行数量, 这种方式实际上就是队列, 这种方式只能限制同时有多少个task在执行, 不能控制速率, 一段时间完成的多少要看每个任务执行的速度.</p>
+
+<pre><code>var sem = make(chan int, MaxOutstanding)
+
+func handle(r *Request) {
+    sem &lt;- 1    // Wait for active queue to drain.
+    process(r)  // May take a long time.
+    &lt;-sem       // Done; enable next request to run.
+}
+
+func Serve(queue chan *Request) {
+    for {
+        req := &lt;-queue
+        go handle(req)  // Don't wait for handle to finish.
+    }
+}
+
+</code></pre>
+
+<h1>微服务需要限流</h1>
+
+<p>一个服务的处理速度是有限的, 如果你不限制这个速度, 最终系统会被越来越多的流量拖垮, 一个请求也不能处理. 如果加上了限流, 无论调用方流量如何变化, 时钟能保证本服务的稳定.
+限流可以是在客户端做, 也可以是现在服务段做. 最高的速度应该由服务方告知其他调用方.</p>
+
+<h1>go 提供的 rate.Limiter 的实现</h1>
+
+<p>Limiter 是一个令牌桶的, 使用时间差来计算令牌个数, 一个task过来获取令牌, 则判断当前时间距离上次更新时间可以获得多少个令牌.加入桶中. 然后看看桶内令牌够不够, 如果不够, 但是调用方愿意等一段时间, 那么计算一下要等待 -tokens 个令牌是否超过了调用方的deadline, 不超过就返回可以让其在等待xxx秒后通过.</p>
+
+<p>非常重要的一件事是: 因为时钟不够精确(硬件原因), 当令牌加入速度过快的时候, 被拦截的tasks count是不准确的. rate过高时, 有1%的误差.</p>
+
+<p>我一开始还以为是因为算法实现有问题, 浮点数加减不精确导致的, 后来自己写了一个不用浮点数记录当前可用的令牌, 而用整数, 对时间差取周期数, 不加余数(不加1.333个个令牌).  虽然比官方库好一点点(能多拦截几个), 但是还是不精确的.</p>
+
+  </div>
+</body>
+<!-- Global Site Tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-106796420-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments)};
+  gtag('js', new Date());
+  gtag('config', 'UA-106796420-1');
+</script>
+
+</html>

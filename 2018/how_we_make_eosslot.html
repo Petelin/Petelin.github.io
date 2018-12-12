@@ -1,0 +1,123 @@
+<html>
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0 user-scalable=yes"/>
+    <link href="/main.css" rel="stylesheet" type="text/css">
+    <link href="/codehighlight.css" rel="stylesheet" type="text/css">
+    <link rel="alternate" type="application/atom+xml" href="/atom.xml" title="Atom feed">
+    <link rel="shortcut icon" href="/images/logo.bmp">
+    <title></title>
+</head>
+<body>
+  <div class="content">
+  <h2>我们是如何做一个区块链游戏的</h2>
+
+<h3>历史记录</h3>
+
+<ol>
+<li>保存到表里, RAM消耗太多</li>
+<li>通过转账记录倒推, 然后用socket传给前端. 代码太麻烦,引入新的系统需要维护</li>
+<li>完美的: https://eosflare.io/account/luckyslotlog. 只需要主账号一点资源. 注意设置权限, 只允许调用者调用. 否则会记录就乱了.</li>
+4. 
+</ol>
+
+<h3>随机数问题</h3>
+
+<ol>
+<li>有且仅有使用链上随机数是对交易者负责, 项目方安心的唯一方法</li>
+<li>接口不可能提供随机数, 因为分布式每个人的random不一样, 而合约要保证幂等性.(这个原因存疑)</li>
+<li>一个action也没法拿到transaction的一些信息,所以单人生成随机数目前是不可能的</li>
+<li>多个人参与一个游戏, 每个人提供公约和msg就可以了</li>
+<li>单个人参与游戏, 只能是和项目方对赌
+<ol>
+<li>开奖过程一定是由项目方来完成的.</li>
+<li>方式
+<ol>
+<li>使用用户当时转账的ID作为随机数</li>
+<li>transaction id + user random id</li>
+<li>(user random id + transaction time) signed by 项目方, 同时项目方提供公约验证</li>
+</ol></li>
+</ol></li>
+</ol>
+
+<p>3个方式由https://slot.nblab.io/提供. 分析文章在https://www.nblab.io/rng</p>
+
+<p>eosslotcode3: 5KbdUNsQcsFWL6FZzTQDLziKpAwotPi4LdWswDNRbRbiTnKoDHU</p>
+
+<p>log:   5KRhzFy7YkpDnhBdpBSrbGwZMGM3e7NhDBLcTGoN2oNGxiHF2J1</p>
+
+<h3>执行</h3>
+
+<div class="codehilite"><pre><span></span><code>cleos create account eosio eosio.token <span class="se">\</span>
+        EOS5dSj9KKpRiuDw8a8MP2B74RxheWAVZayd2z2F7bSJtjU3dHq6t <span class="se">\</span>
+        EOS5dSj9KKpRiuDw8a8MP2B74RxheWAVZayd2z2F7bSJtjU3dHq6t
+
+cleos create account eosio exchange <span class="se">\</span>
+        EOS5dSj9KKpRiuDw8a8MP2B74RxheWAVZayd2z2F7bSJtjU3dHq6t <span class="se">\</span>
+        EOS5dSj9KKpRiuDw8a8MP2B74RxheWAVZayd2z2F7bSJtjU3dHq6t
+
+
+cleos create account eosio user <span class="se">\</span>
+        EOS63n7ApZAPTZS46pLi8nL7Ua5wmm7EgsjG3FTLkcYkJDrkPSRiX <span class="se">\</span>
+        EOS63n7ApZAPTZS46pLi8nL7Ua5wmm7EgsjG3FTLkcYkJDrkPSRiX
+
+cleos create account eosio xxxx11111111 <span class="se">\</span>
+        EOS63n7ApZAPTZS46pLi8nL7Ua5wmm7EgsjG3FTLkcYkJDrkPSRiX <span class="se">\</span>
+        EOS63n7ApZAPTZS46pLi8nL7Ua5wmm7EgsjG3FTLkcYkJDrkPSRiX
+
+cleos create account eosio tester <span class="se">\</span>
+        EOS8jLgxfQMo8MSH91CJoGXZHt8hfUHutEoZJDbPMe1LyDRPe4TzW <span class="se">\</span>
+        EOS8jLgxfQMo8MSH91CJoGXZHt8hfUHutEoZJDbPMe1LyDRPe4TzW
+
+cleos create account eosio hello.code <span class="se">\</span>
+        EOS81actGNqSZxT9fdmJgasGfkPo7n2WBs34QA9MNnWyrFiBcvgrV <span class="se">\</span>
+        EOS81actGNqSZxT9fdmJgasGfkPo7n2WBs34QA9MNnWyrFiBcvgrV
+
+cleos create account eosio eosslotcode2 <span class="se">\</span>
+        EOS81actGNqSZxT9fdmJgasGfkPo7n2WBs34QA9MNnWyrFiBcvgrV <span class="se">\</span>
+        EOS81actGNqSZxT9fdmJgasGfkPo7n2WBs34QA9MNnWyrFiBcvgrV
+
+cleos create account eosio eosslotloger <span class="se">\</span>
+        EOS81actGNqSZxT9fdmJgasGfkPo7n2WBs34QA9MNnWyrFiBcvgrV <span class="se">\</span>
+        EOS81actGNqSZxT9fdmJgasGfkPo7n2WBs34QA9MNnWyrFiBcvgrV      
+
+<span class="nb">echo</span> <span class="s2">&quot;创建系统币&quot;</span>
+cleos <span class="nb">set</span> contract eosio.token /Users/xiaolin.zhang/Documents/github/eos/contracts/eosio.token -p eosio.token@active
+
+cleos push action eosio.token create <span class="se">\</span>
+        <span class="s1">&#39;{&quot;issuer&quot;:&quot;eosio&quot;, &quot;maximum_supply&quot;:&quot;1000000000.0000 EOS&quot;}&#39;</span> <span class="se">\</span>
+        -p eosio.token@active
+
+cleos push action eosio.token issue <span class="s1">&#39;[ &quot;user&quot;, &quot;10000000.0000 EOS&quot;, &quot;memo&quot; ]&#39;</span> <span class="se">\</span>
+        -p eosio@active
+
+cleos transfer user xxxx11111111 <span class="s2">&quot;100000.1000 EOS&quot;</span> 
+cleos transfer user eosslotcode2 <span class="s2">&quot;100000.1000 EOS&quot;</span> 
+cleos transfer user eosslotloger <span class="s2">&quot;100000.1000 EOS&quot;</span> 
+cleos transfer user tester <span class="s2">&quot;100000.1000 EOS&quot;</span> 
+cleos transfer user hello.code <span class="s2">&quot;100000.1000 EOS&quot;</span> 
+
+<span class="nb">echo</span> <span class="s2">&quot;设置合约&quot;</span>
+cleos <span class="nb">set</span> contract eosslotloger /Users/xiaolin.zhang/Documents/github/eosslot/log -p eosslotloger
+
+cleos <span class="nb">set</span> contract eosslotcode2 /Users/xiaolin.zhang/Documents/github/eosslot/eosslot -p eosslotcode2@active <span class="p">;</span>cleos push action eosslotcode2 init <span class="s1">&#39;{}&#39;</span> -p eosslotcode2
+
+cleos <span class="nb">set</span> account permission eosslotcode2 active <span class="s1">&#39;{&quot;threshold&quot;: 1,&quot;keys&quot;: [{&quot;key&quot;: &quot;EOS81actGNqSZxT9fdmJgasGfkPo7n2WBs34QA9MNnWyrFiBcvgrV&quot;,&quot;weight&quot;: 1}],&quot;accounts&quot;: [{&quot;permission&quot;:{&quot;actor&quot;:&quot;eosslotcode2&quot;,&quot;permission&quot;:&quot;eosio.code&quot;},&quot;weight&quot;:1}]}&#39;</span> owner -p eosslotcode2
+
+cleos transfer xxxx11111111 eosslotcode2 <span class="s2">&quot;0.1000 EOS&quot;</span> <span class="s2">&quot;seed:b2cd3ea401d963b6fa75dd776a6397b77aef6623f9fabd4aa5c56f695b309af7&quot;</span>
+
+cleos push action eosslotcode2 reveal <span class="s1">&#39;{&quot;id&quot;: 0, &quot;pub_key&quot;: &quot;EOS6MRyAjQq8ud7hVNYcfnVPJqcVpscN5So8BhtHuGYqET5GDW5CV&quot;, &quot;sig&quot;: &quot;SIG_K1_KY6BXiZDaDm9QMKmQPr2xp9dstDgmHLkVTi4rED3DkWYTruu1D5oyU96njrpds1G7n7fW3HPBRED8Fs6b3t22QpM3iMGcu&quot;, &quot;block_id&quot;: &quot;011cab4d7523a59b373d324daec6d0d6ced88f7e2bb4a5782dcb308327d0715d&quot;}&#39;</span> -p eosslotcode2
+</code></pre></div>
+
+  </div>
+</body>
+<!-- Global Site Tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-106796420-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments)};
+  gtag('js', new Date());
+  gtag('config', 'UA-106796420-1');
+</script>
+
+</html>

@@ -1,0 +1,195 @@
+<html>
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0 user-scalable=yes"/>
+    <link href="/main.css" rel="stylesheet" type="text/css">
+    <link href="/codehighlight.css" rel="stylesheet" type="text/css">
+    <link rel="alternate" type="application/atom+xml" href="/atom.xml" title="Atom feed">
+    <link rel="shortcut icon" href="/images/logo.bmp">
+    <title></title>
+</head>
+<body>
+  <div class="content">
+  <h2>文档数据库:DynamoDB</h2>
+
+<p>dynamo is an expressive DyanmoDB ORM which highly integrates with the official <a href="https://github.com/aws/aws-sdk-go/">AWS SDK</a>.</p>
+
+<h3>Quick Example</h3>
+
+<div class="codehilite"><pre><span></span><code><span class="kd">type</span> <span class="nx">User</span> <span class="kd">struct</span> <span class="p">{</span>
+    <span class="nx">ID</span>        <span class="kt">int</span>
+    <span class="nx">Age</span>       <span class="kt">int</span>
+    <span class="nx">LastName</span>  <span class="kt">string</span> <span class="s">`json:&quot;last_name&quot;`</span>
+    <span class="nx">FirstName</span> <span class="kt">string</span> <span class="s">`json:&quot;first_name&quot;`</span>
+<span class="p">}</span>
+<span class="kd">const</span> <span class="nx">partitionKey</span> <span class="p">=</span> <span class="s">&quot;ID&quot;</span>
+<span class="kd">const</span> <span class="nx">RangeKey</span> <span class="p">=</span> <span class="s">&quot;LastName&quot;</span>
+
+<span class="c1">// init dynamo with config and tableName</span>
+<span class="nx">table</span> <span class="p">=</span> <span class="nx">dynamo</span><span class="p">.</span><span class="nx">DB</span><span class="p">(</span><span class="nx">context</span><span class="p">.</span><span class="nx">Background</span><span class="p">(),</span> <span class="s">&quot;fake-region&quot;</span><span class="p">,</span> <span class="kc">nil</span><span class="p">).</span><span class="nx">Table</span><span class="p">(</span><span class="nx">tableName</span><span class="p">)</span>
+
+<span class="c1">// save one user</span>
+<span class="nx">user</span> <span class="o">:=</span> <span class="nx">User</span><span class="p">{</span>
+    <span class="nx">ID</span><span class="p">:</span>        <span class="mi">1</span><span class="p">,</span>
+    <span class="nx">Age</span><span class="p">:</span>       <span class="mi">32</span><span class="p">,</span>
+    <span class="nx">FirstName</span><span class="p">:</span> <span class="s">&quot;Dennis&quot;</span><span class="p">,</span>
+    <span class="nx">LastName</span><span class="p">:</span>  <span class="s">&quot;Ritchie&quot;</span><span class="p">,</span>
+<span class="p">}</span>
+<span class="nx">err</span> <span class="o">:=</span> <span class="nx">table</span><span class="p">.</span><span class="nx">Put</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">user</span><span class="p">).</span><span class="nx">NotExist</span><span class="p">(</span><span class="nx">partitionKey</span><span class="p">,</span> <span class="nx">RangeKey</span><span class="p">).</span><span class="nx">Run</span><span class="p">()</span>
+<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+    <span class="k">return</span>
+<span class="p">}</span>
+
+<span class="c1">// get by partitionKey and RangeKey</span>
+<span class="nx">getUser</span> <span class="o">:=</span> <span class="nb">new</span><span class="p">(</span><span class="nx">testUser</span><span class="p">)</span>
+<span class="nx">err</span> <span class="p">=</span> <span class="nx">table</span><span class="p">.</span><span class="nx">Get</span><span class="p">(</span><span class="nx">partitionKey</span><span class="p">,</span> <span class="nx">user</span><span class="p">.</span><span class="nx">ID</span><span class="p">).</span><span class="nx">Range</span><span class="p">(</span><span class="nx">RangeKey</span><span class="p">,</span> <span class="nx">user</span><span class="p">.</span><span class="nx">LastName</span><span class="p">).</span>
+<span class="nx">Consistent</span><span class="p">(</span><span class="kc">true</span><span class="p">).</span>
+<span class="nx">Fields</span><span class="p">(</span><span class="s">&quot;ID&quot;</span><span class="p">,</span> <span class="s">&quot;first_name&quot;</span><span class="p">).</span>
+<span class="nx">One</span><span class="p">(</span><span class="nx">getUser</span><span class="p">)</span>
+<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+    <span class="k">return</span>
+<span class="p">}</span>
+
+<span class="c1">// Update age field</span>
+<span class="nx">updateCondition</span> <span class="o">:=</span> <span class="nx">expression</span><span class="p">.</span><span class="nx">UpdateBuilder</span><span class="p">{}.</span>
+<span class="nx">Set</span><span class="p">(</span><span class="nx">expression</span><span class="p">.</span><span class="nx">Name</span><span class="p">(</span><span class="s">&quot;Age&quot;</span><span class="p">),</span> <span class="nx">expression</span><span class="p">.</span><span class="nx">Value</span><span class="p">(</span><span class="mi">33</span><span class="p">))</span>
+<span class="nx">err</span> <span class="p">=</span> <span class="nx">table</span><span class="p">.</span><span class="nx">Update</span><span class="p">(</span><span class="nx">partitionKey</span><span class="p">,</span> <span class="nx">user</span><span class="p">.</span><span class="nx">ID</span><span class="p">).</span><span class="nx">Range</span><span class="p">(</span><span class="nx">RangeKey</span><span class="p">,</span> <span class="nx">user</span><span class="p">.</span><span class="nx">LastName</span><span class="p">).</span>
+<span class="nx">UpdateBuilder</span><span class="p">(</span><span class="nx">updateCondition</span><span class="p">).</span>
+<span class="nx">Run</span><span class="p">()</span>
+<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+    <span class="k">return</span>
+<span class="p">}</span>
+
+<span class="c1">// also provide query, scan</span>
+</code></pre></div>
+
+<h3>Problem we meet</h3>
+
+<h4>1. Hard to constuct param</h4>
+
+<p>in the old days, we have to create expression by hand wrting. it looks like a "assembly language". It make me code very slowly, hard to change and reuse. </p>
+
+<p>example 1:  code in <code>Grab-Wheels</code>, with those magic string <code>Exp</code> </p>
+
+<div class="codehilite"><pre><span></span><code><span class="kd">const</span> <span class="nx">versionUpdateExp</span>    <span class="p">=</span> <span class="s">&quot;SET DefaultJSON = :defaultJSON, ServiceConfigurationsJSON = :serviceConfigurationsJSON, UpdatedAt = :updatedAt ADD Version :incr&quot;</span>
+<span class="kd">const</span> <span class="nx">versionConditionExp</span> <span class="p">=</span> <span class="s">&quot;attribute_not_exists(Version) OR Version = :version&quot;</span>
+
+<span class="kd">func</span> <span class="p">(</span><span class="nx">d</span> <span class="o">*</span><span class="nx">ddbMicroserviceConfigurations</span><span class="p">)</span> <span class="nx">Save</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="nx">configs</span> <span class="nx">MicroserviceConfigurations</span><span class="p">)</span> <span class="kt">error</span> <span class="p">{</span>
+    <span class="nx">params</span> <span class="o">:=</span> <span class="o">&amp;</span><span class="nx">dynamodb</span><span class="p">.</span><span class="nx">UpdateItemInput</span><span class="p">{</span>
+        <span class="nx">TableName</span><span class="p">:</span>           <span class="nx">aws</span><span class="p">.</span><span class="nx">String</span><span class="p">(</span><span class="nx">config</span><span class="p">.</span><span class="nx">Config</span><span class="p">.</span><span class="nx">AWS</span><span class="p">.</span><span class="nx">DDB</span><span class="p">.</span><span class="nx">Configs</span><span class="p">),</span>
+        <span class="nx">UpdateExpression</span><span class="p">:</span>    <span class="nx">aws</span><span class="p">.</span><span class="nx">String</span><span class="p">(</span><span class="nx">versionUpdateExp</span><span class="p">),</span>
+        <span class="nx">ConditionExpression</span><span class="p">:</span> <span class="nx">aws</span><span class="p">.</span><span class="nx">String</span><span class="p">(</span><span class="nx">versionConditionExp</span><span class="p">),</span>
+        <span class="nx">ExpressionAttributeValues</span><span class="p">:</span> <span class="kd">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="o">*</span><span class="nx">dynamodb</span><span class="p">.</span><span class="nx">AttributeValue</span><span class="p">{</span>
+            <span class="s">&quot;:incr&quot;</span><span class="p">:</span> <span class="p">{</span><span class="nx">N</span><span class="p">:</span> <span class="nx">aws</span><span class="p">.</span><span class="nx">String</span><span class="p">(</span><span class="s">&quot;1&quot;</span><span class="p">)},</span>
+            <span class="s">&quot;:serviceConfigurationsJSON&quot;</span><span class="p">:</span> <span class="p">{</span><span class="nx">S</span><span class="p">:</span> <span class="nx">aws</span><span class="p">.</span><span class="nx">String</span><span class="p">(</span><span class="nb">string</span><span class="p">(</span><span class="nx">ddbutils</span><span class="p">.</span><span class="nx">ToJSON</span><span class="p">(</span><span class="nx">configs</span><span class="p">.</span><span class="nx">ServiceConfigurations</span><span class="p">)))},</span>
+            <span class="s">&quot;:defaultJSON&quot;</span><span class="p">:</span>               <span class="p">{</span><span class="nx">S</span><span class="p">:</span> <span class="nx">aws</span><span class="p">.</span><span class="nx">String</span><span class="p">(</span><span class="nb">string</span><span class="p">(</span><span class="nx">ddbutils</span><span class="p">.</span><span class="nx">ToJSON</span><span class="p">(</span><span class="nx">configs</span><span class="p">.</span><span class="nx">DefaultConfiguration</span><span class="p">)))},</span>
+            <span class="s">&quot;:version&quot;</span><span class="p">:</span>                   <span class="p">{</span><span class="nx">N</span><span class="p">:</span> <span class="nx">aws</span><span class="p">.</span><span class="nx">String</span><span class="p">(</span><span class="nx">strconv</span><span class="p">.</span><span class="nx">FormatInt</span><span class="p">(</span><span class="nb">int64</span><span class="p">(</span><span class="nx">configs</span><span class="p">.</span><span class="nx">Version</span><span class="p">),</span> <span class="mi">10</span><span class="p">))},</span>
+            <span class="s">&quot;:updatedAt&quot;</span><span class="p">:</span>                 <span class="p">{</span><span class="nx">N</span><span class="p">:</span> <span class="nx">aws</span><span class="p">.</span><span class="nx">String</span><span class="p">(</span><span class="nx">fmt</span><span class="p">.</span><span class="nx">Sprintf</span><span class="p">(</span><span class="s">&quot;%d&quot;</span><span class="p">,</span> <span class="nx">time</span><span class="p">.</span><span class="nx">Now</span><span class="p">().</span><span class="nx">Unix</span><span class="p">()))},</span>
+        <span class="p">},</span>
+        <span class="nx">Key</span><span class="p">:</span> <span class="kd">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="o">*</span><span class="nx">dynamodb</span><span class="p">.</span><span class="nx">AttributeValue</span><span class="p">{</span>
+            <span class="nx">attributeNamespace</span><span class="p">:</span> <span class="p">{</span>
+                <span class="nx">S</span><span class="p">:</span> <span class="nx">aws</span><span class="p">.</span><span class="nx">String</span><span class="p">(</span><span class="nx">configs</span><span class="p">.</span><span class="nx">Namespace</span><span class="p">),</span>
+            <span class="p">},</span>
+            <span class="nx">attributeKey</span><span class="p">:</span> <span class="p">{</span>
+                <span class="nx">S</span><span class="p">:</span> <span class="nx">aws</span><span class="p">.</span><span class="nx">String</span><span class="p">(</span><span class="nx">configs</span><span class="p">.</span><span class="nx">Key</span><span class="p">),</span>
+            <span class="p">},</span>
+        <span class="p">},</span>
+        <span class="nx">ReturnValues</span><span class="p">:</span> <span class="nx">aws</span><span class="p">.</span><span class="nx">String</span><span class="p">(</span><span class="s">&quot;ALL_OLD&quot;</span><span class="p">),</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<h4>2. Hard to use return value</h4>
+
+<p>old client return data with a map struct <code>map[string]*dynamodb.AttributeValue</code>.  we have to get data by a string key (rather than <code>A.field</code>) ,  and then do nil test, covert to sepcial type. all of this is not neccessory. </p>
+
+<p>example: </p>
+
+<div class="codehilite"><pre><span></span><code><span class="kd">func</span> <span class="nx">configurationsFromDDB</span><span class="p">(</span><span class="nx">item</span> <span class="kd">map</span><span class="p">[</span><span class="kt">string</span><span class="p">]</span><span class="o">*</span><span class="nx">dynamodb</span><span class="p">.</span><span class="nx">AttributeValue</span><span class="p">)</span> <span class="nx">MicroserviceConfigurations</span> <span class="p">{</span>
+    <span class="nx">c</span> <span class="o">:=</span> <span class="nx">MicroserviceConfigurations</span><span class="p">{</span>
+        <span class="nx">Namespace</span><span class="p">:</span> <span class="o">*</span><span class="p">(</span><span class="nx">item</span><span class="p">[</span><span class="nx">attributeNamespace</span><span class="p">].</span><span class="nx">S</span><span class="p">),</span>
+        <span class="nx">Key</span><span class="p">:</span>       <span class="o">*</span><span class="p">(</span><span class="nx">item</span><span class="p">[</span><span class="nx">attributeKey</span><span class="p">].</span><span class="nx">S</span><span class="p">),</span>
+    <span class="p">}</span>
+    <span class="k">if</span> <span class="nx">jsonDefaultConfig</span> <span class="o">:=</span> <span class="nx">item</span><span class="p">[</span><span class="nx">attributeDefaultConfigurationJSON</span><span class="p">];</span> <span class="nx">jsonDefaultConfig</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="o">&amp;&amp;</span> <span class="nx">jsonDefaultConfig</span><span class="p">.</span><span class="nx">S</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+        <span class="nx">_</span> <span class="p">=</span> <span class="nx">json</span><span class="p">.</span><span class="nx">Unmarshal</span><span class="p">([]</span><span class="nb">byte</span><span class="p">(</span><span class="o">*</span><span class="p">(</span><span class="nx">jsonDefaultConfig</span><span class="p">.</span><span class="nx">S</span><span class="p">)),</span> <span class="o">&amp;</span><span class="p">(</span><span class="nx">c</span><span class="p">.</span><span class="nx">DefaultConfiguration</span><span class="p">))</span>
+    <span class="p">}</span>
+    <span class="k">if</span> <span class="nx">item</span><span class="p">[</span><span class="nx">attributePoolConfigurations</span><span class="p">]</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+        <span class="nx">_</span> <span class="p">=</span> <span class="nx">json</span><span class="p">.</span><span class="nx">Unmarshal</span><span class="p">(</span><span class="nx">item</span><span class="p">[</span><span class="nx">attributePoolConfigurations</span><span class="p">].</span><span class="nx">B</span><span class="p">,</span> <span class="o">&amp;</span><span class="p">(</span><span class="nx">c</span><span class="p">.</span><span class="nx">PoolConfigurations</span><span class="p">))</span>
+    <span class="p">}</span>
+    <span class="k">if</span> <span class="nx">jsonServiceConfig</span> <span class="o">:=</span> <span class="nx">item</span><span class="p">[</span><span class="nx">attributeServiceConfigurationsJSON</span><span class="p">];</span> <span class="nx">jsonServiceConfig</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="o">&amp;&amp;</span> <span class="nx">jsonServiceConfig</span><span class="p">.</span><span class="nx">S</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+        <span class="nx">_</span> <span class="p">=</span> <span class="nx">json</span><span class="p">.</span><span class="nx">Unmarshal</span><span class="p">([]</span><span class="nb">byte</span><span class="p">(</span><span class="o">*</span><span class="p">(</span><span class="nx">jsonServiceConfig</span><span class="p">.</span><span class="nx">S</span><span class="p">)),</span> <span class="o">&amp;</span><span class="p">(</span><span class="nx">c</span><span class="p">.</span><span class="nx">ServiceConfigurations</span><span class="p">))</span>
+    <span class="p">}</span>
+    <span class="k">if</span> <span class="nx">item</span><span class="p">[</span><span class="nx">attributeVersion</span><span class="p">]</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="o">&amp;&amp;</span> <span class="nx">item</span><span class="p">[</span><span class="nx">attributeVersion</span><span class="p">].</span><span class="nx">N</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+        <span class="nx">version</span><span class="p">,</span> <span class="nx">_</span> <span class="o">:=</span> <span class="nx">strconv</span><span class="p">.</span><span class="nx">ParseInt</span><span class="p">(</span><span class="o">*</span><span class="p">(</span><span class="nx">item</span><span class="p">[</span><span class="nx">attributeVersion</span><span class="p">].</span><span class="nx">N</span><span class="p">),</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">32</span><span class="p">)</span>
+        <span class="nx">c</span><span class="p">.</span><span class="nx">Version</span> <span class="p">=</span> <span class="nb">int</span><span class="p">(</span><span class="nx">version</span><span class="p">)</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="nx">c</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<h3>Problem sovled</h3>
+
+<p>we provide a chained method calls with integrate with aws package <code>expression</code> . It provide us  <code>UpdateBuilder</code> and <code>ConditionBuilde</code> , we do not need to write string format expression.  </p>
+
+<p>this is a rewrite to the first example:</p>
+
+<div class="codehilite"><pre><span></span><code><span class="nx">updateBuilder</span> <span class="o">:=</span> <span class="nx">expression</span><span class="p">.</span><span class="nx">UpdateBuilder</span><span class="p">{}.</span>
+    <span class="nx">Set</span><span class="p">(</span><span class="nx">expression</span><span class="p">.</span><span class="nx">Name</span><span class="p">(</span><span class="s">&quot;Age&quot;</span><span class="p">),</span> <span class="nx">expression</span><span class="p">.</span><span class="nx">Value</span><span class="p">(</span><span class="mi">33</span><span class="p">)).</span>
+    <span class="nx">Set</span><span class="p">(</span><span class="nx">expression</span><span class="p">.</span><span class="nx">Name</span><span class="p">(</span><span class="s">&quot;DefaultJSON&quot;</span><span class="p">),</span> <span class="nx">expression</span><span class="p">.</span><span class="nx">Value</span><span class="p">(</span><span class="nx">configs</span><span class="p">.</span><span class="nx">DefaultConfiguration</span><span class="p">)).</span>
+    <span class="nx">Set</span><span class="p">(</span><span class="nx">expression</span><span class="p">.</span><span class="nx">Name</span><span class="p">(</span><span class="s">&quot;ServiceConfigurationsJSON&quot;</span><span class="p">),</span> <span class="nx">expression</span><span class="p">.</span><span class="nx">Value</span><span class="p">(</span><span class="nx">configs</span><span class="p">.</span><span class="nx">ServiceConfigurations</span><span class="p">)).</span>
+    <span class="nx">Set</span><span class="p">(</span><span class="nx">expression</span><span class="p">.</span><span class="nx">Name</span><span class="p">(</span><span class="s">&quot;UpdatedAt&quot;</span><span class="p">),</span> <span class="nx">expression</span><span class="p">.</span><span class="nx">Value</span><span class="p">(</span><span class="nx">configs</span><span class="p">.</span><span class="nx">UpdateAt</span><span class="p">)).</span>
+    <span class="nx">Add</span><span class="p">(</span><span class="nx">expression</span><span class="p">.</span><span class="nx">Name</span><span class="p">(</span><span class="s">&quot;Version&quot;</span><span class="p">),</span> <span class="nx">expression</span><span class="p">.</span><span class="nx">Value</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+
+<span class="nx">condition</span> <span class="o">:=</span> <span class="nx">expression</span><span class="p">.</span><span class="nx">Name</span><span class="p">(</span><span class="s">&quot;Version&quot;</span><span class="p">).</span><span class="nx">AttributeNotExists</span><span class="p">().</span><span class="nx">Or</span><span class="p">(</span><span class="nx">expression</span><span class="p">.</span><span class="nx">Name</span><span class="p">(</span><span class="s">&quot;Version&quot;</span><span class="p">).</span><span class="nx">Equal</span><span class="p">(</span><span class="nx">configs</span><span class="p">.</span><span class="nx">Version</span><span class="p">))</span>
+
+<span class="nx">err</span> <span class="p">=</span> <span class="nx">table</span><span class="p">.</span><span class="nx">Update</span><span class="p">(</span><span class="nx">partitionKey</span><span class="p">,</span> <span class="nx">configs</span><span class="p">.</span><span class="nx">Namespace</span><span class="p">).</span><span class="nx">Range</span><span class="p">(</span><span class="nx">RangeKey</span><span class="p">,</span> <span class="nx">configs</span><span class="p">.</span><span class="nx">Key</span><span class="p">).</span>
+    <span class="nx">Condition</span><span class="p">(</span><span class="nx">condition</span><span class="p">).</span>
+    <span class="nx">UpdateBuilder</span><span class="p">(</span><span class="nx">updateBuilder</span><span class="p">).</span>
+    <span class="nx">ReturnValue</span><span class="p">(</span><span class="nx">dynamodb</span><span class="p">.</span><span class="nx">ReturnValueAllOld</span><span class="p">,</span> <span class="kc">nil</span><span class="p">)</span>
+    <span class="nx">Run</span><span class="p">()</span>
+</code></pre></div>
+
+<p>less code but more expressive and we remove all "magic string" construct param with a more robost way. With method hint provide by IDE, we can write those rubost code easy and quickly.</p>
+
+<p>New client handle all conver detail, all user need to do is pass an interface  struct. we will fill it with response.</p>
+
+<h3>Performance</h3>
+
+<h4>logic analyze</h4>
+
+<p>the must expencie operation will be the internet access, the second will the <code>marshal</code> and <code>unmarshal</code></p>
+
+<p>However, due to sepcial DynamoDB JSON structer, data unmarshal is even faster then JSON unmarshal. here is the benchmark result</p>
+
+<pre><code>goos: darwin
+goarch: amd64
+pkg: gitlab.myteksi.net/gophers/go/food/food-profile/db/dynamo/example
+Benchmark_DDBMarshalMap-8                 100000             18291 ns/op
+Benchmark_DDB_UNMarshalMap-8              100000             17999 ns/op
+Benchmark_JSONMarshal-8                   500000              2745 ns/op
+Benchmark_JSON_UNMarshalMap-8              20000             83945 ns/op
+</code></pre>
+
+<h4>real performance</h4>
+
+<pre><code>goos: darwin
+goarch: amd64
+pkg: gitlab.myteksi.net/gophers/go/food/food-profile/db/dynamo/example
+Benchmark_CRUD_Save-8                        500           3314416 ns/op
+Benchmark_CRUD_RawSave-8                     500           3360046 ns/op
+Benchmark_CRUD_Get-8                        1000           2051761 ns/op
+Benchmark_CRUD_RawGet-8                     1000           1919121 ns/op
+</code></pre>
+
+  </div>
+</body>
+<!-- Global Site Tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-106796420-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments)};
+  gtag('js', new Date());
+  gtag('config', 'UA-106796420-1');
+</script>
+
+</html>

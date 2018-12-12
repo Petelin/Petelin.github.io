@@ -1,0 +1,203 @@
+<html>
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0 user-scalable=yes"/>
+    <link href="/main.css" rel="stylesheet" type="text/css">
+    <link href="/codehighlight.css" rel="stylesheet" type="text/css">
+    <link rel="alternate" type="application/atom+xml" href="/atom.xml" title="Atom feed">
+    <link rel="shortcut icon" href="/images/logo.bmp">
+    <title></title>
+</head>
+<body>
+  <div class="content">
+  <h2>python 元类</h2>
+
+<p>之前想清楚了写到了笔记中,最近看到python3.6又出了个<code>__init_subclass__</code>,之前的东西又全忘了.这次在总结一下.</p>
+
+<p>new: 结合javascript的原型链体会一下动态语言一切皆对象的思想.</p>
+
+<h3>以一个实用的实例</h3>
+
+<div class="codehilite"><pre><span></span><code><span class="ch">#!/usr/bin/env python</span>
+<span class="k">class</span> <span class="nc">Type</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="k">print</span><span class="p">(</span><span class="s2">&quot;运行到&quot;</span><span class="p">,</span> <span class="s2">&quot;Type&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">type_</span><span class="p">):</span>
+        <span class="k">print</span><span class="p">(</span><span class="s2">&quot;set type&quot;</span><span class="p">,</span> <span class="n">type_</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">type_class</span> <span class="o">=</span> <span class="n">type_</span>
+
+    <span class="k">def</span> <span class="nf">vaild</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">type_class</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">TypeCheckMeta</span><span class="p">(</span><span class="nb">type</span><span class="p">):</span>
+    <span class="k">print</span><span class="p">(</span><span class="s2">&quot;运行到&quot;</span><span class="p">,</span> <span class="s2">&quot;TypeCheckMeta&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">bases</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="k">print</span><span class="p">(</span><span class="s2">&quot;元类 __new__&quot;</span><span class="p">)</span>
+        <span class="n">inst</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">TypeCheckMeta</span><span class="p">,</span> <span class="bp">cls</span><span class="p">)</span><span class="o">.</span><span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">bases</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span>
+        <span class="n">inst</span><span class="o">.</span><span class="n">_fileds</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">dict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">Type</span><span class="p">):</span>
+                <span class="n">inst</span><span class="o">.</span><span class="n">_fileds</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">inst</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">print</span><span class="p">(</span><span class="s2">&quot;元类 __init__&quot;</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">TypeCheckMeta</span><span class="p">,</span> <span class="bp">cls</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">print</span><span class="p">(</span><span class="s2">&quot;元类 __call__&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">TypeCheckMeta</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__call__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">Test</span><span class="p">(</span><span class="n">metaclass</span><span class="o">=</span><span class="n">TypeCheckMeta</span><span class="p">):</span>
+    <span class="k">print</span><span class="p">(</span><span class="s2">&quot;运行到&quot;</span><span class="p">,</span> <span class="s2">&quot;Test&quot;</span><span class="p">)</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">Type</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span>
+    <span class="n">age</span> <span class="o">=</span> <span class="n">Type</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">print</span><span class="p">(</span><span class="s2">&quot;类 __new__&quot;</span><span class="p">)</span>
+        <span class="k">print</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">Test</span><span class="p">,</span> <span class="bp">cls</span><span class="p">)</span><span class="o">.</span><span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span>
+
+
+    <span class="k">def</span> <span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">print</span><span class="p">(</span><span class="s2">&quot;类 __setattr__&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fileds</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fileds</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">vaild</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;invaild...&quot;</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Test</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">a</span><span class="p">):</span>
+        <span class="k">print</span><span class="p">(</span><span class="s2">&quot;类 __init__&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">print</span><span class="p">(</span><span class="s2">&quot;类 __call__&quot;</span><span class="p">)</span>
+
+<span class="n">t</span> <span class="o">=</span> <span class="n">Test</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+</code></pre></div>
+
+<p>场景就是需要你对变量做强制性检查.</p>
+
+<h3>加载过程</h3>
+
+<p>注释掉最后两行代码,会发现如下输出  </p>
+
+<div class="codehilite"><pre><span></span><code><span class="err">运行到</span> <span class="n">Type</span>
+<span class="err">运行到</span> <span class="n">TypeCheckMeta</span>
+<span class="err">运行到</span> <span class="n">Test</span>
+<span class="nb">set</span> <span class="nb">type</span> <span class="o">&lt;</span><span class="k">class</span> <span class="err">&#39;</span><span class="nc">str</span><span class="s1">&#39;&gt;</span>
+<span class="nb">set</span> <span class="nb">type</span> <span class="o">&lt;</span><span class="k">class</span> <span class="err">&#39;</span><span class="nc">int</span><span class="s1">&#39;&gt;</span>
+<span class="err">元类</span> <span class="fm">__new__</span>
+<span class="err">元类</span> <span class="fm">__init__</span>
+</code></pre></div>
+
+<p>首先,Python在加载的时候扫过整个文件.遇到类定义的时候如下执行:
+0. 解析类中的元素, 创建类变量与方法, 并加载到类空间中. 类的基类信息, 元类等信息. 
+1. 找到该类的元类,然后调用元类的<code>__new__</code>方法,参数是<code>(类名where,类基类bases,类空间dict)</code>
+2. 元类的<code>__new__</code>最终一定会调用内置类型<code>type.__new__</code>
+3. <code>type.__new__</code>会调用元类的<code>__init__</code>创建出一个类对象放在内存中.至此类对象已经加载完成了.</p>
+
+<h3>执行过程</h3>
+
+<p>现在我们来看看执行的  </p>
+
+<div class="codehilite"><pre><span></span><code><span class="n">t</span> <span class="o">=</span> <span class="n">Test</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+</code></pre></div>
+
+<ol>
+<li><code>Test</code>是什么?从语法层面上,他是一个类.但是在执行过程中,经过上面的加载步骤,它是一个生成的实例,所以<code>Test()</code>会调用元类的<code>__call__</code>方法.</li>
+<li>元类一定又得陷入<code>type.__call__</code>方法.</li>
+<li><code>type.__call__</code>方法调用类<code>__new__</code>方法.</li>
+<li>类的<code>__new__</code>方法一定又陷入<code>object.__new__</code></li>
+<li><code>object.__new__</code>调用类的<code>__init__</code>方法,最终一个实例被创建出来了.</li>
+</ol>
+
+<h3>新的方法<code>__init_subclass__(self, k=...)</code></h3>
+
+<p>触发时机: 子类加载时触发. <br />
+具体的: 加载子类时发现父类定义了<code>__init_subclass__</code>方法,那么在元类<code>__new__</code>之后<code>__init__</code>之前调用这个<code>__init_subclass__</code>.(实现应该不是这样子的,应该是基于回调.比如在type这个元元元类基础上检测调用<strong>init_subclass</strong>).  </p>
+
+<p>这样就不需要写元类就可以修饰子类了.  </p>
+
+<p>其传参数方式并没有什么魔法,</p>
+
+<div class="codehilite"><pre><span></span><code><span class="k">class</span> <span class="nc">SubClass</span><span class="p">(</span><span class="n">Father</span><span class="p">,</span> <span class="n">param</span><span class="o">=</span><span class="s2">&quot;haha&quot;</span><span class="p">):</span>
+    <span class="k">pass</span>
+</code></pre></div>
+
+<p>在传递给<code>__new__</code>的时候给现在要多一个位置参数</p>
+
+<div class="codehilite"><pre><span></span><code><span class="k">def</span> <span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">bases</span><span class="p">,</span> <span class="nb">dict</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">pass</span>
+</code></pre></div>
+
+<p>这样子<code>__init_subclass__</code>也可以获取到了.</p>
+
+<h3>动态语言--一切都是对象</h3>
+
+<div class="codehilite"><pre><span></span><code><span class="kd">function</span> <span class="nx">People</span><span class="p">(</span><span class="nx">name</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">name</span> <span class="o">=</span> <span class="nx">name</span>
+<span class="p">}</span>
+
+<span class="nx">p</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">People</span><span class="p">(</span><span class="s2">&quot;Irn&quot;</span><span class="p">)</span>
+</code></pre></div>
+
+<p>不了解js原型链的同学会很疑惑这种写法.很明显通过关键词<code>function</code>表明了People是个<code>函数</code>,那么,<code>new 函数</code>算什么语法? <br />
+实际上js里的函数可不仅仅是一个c语言层面的函数,他是一个完整的实例,是Function创建出来的实例.</p>
+
+<pre><code>f = new Function('name', 'return alert("hello, " + name + "!");');
+</code></pre>
+
+<p>这样我们就有一个<code>constructor</code>的对象,他们可以使用<code>new</code>关键词. <br />
+在创建一个对象的时候,解释器做了如下工作:</p>
+
+<blockquote>
+  <ol>
+  <li>It creates a new object.</li>
+  <li>It sets the constructor property of the object to Vehicle.</li>
+  <li>It sets up the object to delegate to Vehicle.prototype.</li>
+  <li>It calls Vehicle() in the context of the new object.</li>
+  </ol>
+</blockquote>
+
+<p>具体的看<a href="&quot;https://blog.pivotal.io/labs/labs/javascript-constructors-prototypes-and-the-new-keyword&quot;">这里</a></p>
+
+<p>其中在设置prototype的时候完成了类变量,类函数的继承. <br />
+最后一步调用<code>函数的.prototype.call(第一步创建出来的空对象)</code>,这个时候函数的this参数就会指向这个新的对象,这样就会拥有实例变量(每个人都不一样的) <br />
+所以最合理的模拟类实现是这个样子的  </p>
+
+<div class="codehilite"><pre><span></span><code><span class="c1">// Class definition / constructor</span>
+<span class="kd">var</span> <span class="nx">Vehicle</span> <span class="o">=</span> <span class="kd">function</span> <span class="nx">Vehicle</span><span class="p">(</span><span class="nx">color</span><span class="p">)</span> <span class="p">{</span>
+  <span class="c1">// Initialization</span>
+  <span class="k">this</span><span class="p">.</span><span class="nx">color</span> <span class="o">=</span> <span class="nx">color</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="c1">// Instance methods</span>
+<span class="nx">Vehicle</span><span class="p">.</span><span class="nx">prototype</span> <span class="o">=</span> <span class="p">{</span>
+  <span class="nx">go</span><span class="o">:</span> <span class="kd">function</span> <span class="nx">go</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="s2">&quot;Vroom!&quot;</span><span class="p">;</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<p>prototype里的东西所有的变量都共享一份,在实例里找不到就会向上查找,而function这个构造器里的this因为指向的是一个{}每次执行都会重新赋值一遍,而且会屏蔽在prototype上设置的属性.</p>
+
+<p>this和prototype是js里非常聪明的做法也是整个的基石.</p>
+
+  </div>
+</body>
+<!-- Global Site Tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-106796420-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments)};
+  gtag('js', new Date());
+  gtag('config', 'UA-106796420-1');
+</script>
+
+</html>

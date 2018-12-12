@@ -1,0 +1,104 @@
+<html>
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0 user-scalable=yes"/>
+    <link href="/main.css" rel="stylesheet" type="text/css">
+    <link href="/codehighlight.css" rel="stylesheet" type="text/css">
+    <link rel="alternate" type="application/atom+xml" href="/atom.xml" title="Atom feed">
+    <link rel="shortcut icon" href="/images/logo.bmp">
+    <title></title>
+</head>
+<body>
+  <div class="content">
+  <h2>Bottle源码总结</h2>
+
+<p>从好友github上看到了Bottle这个框架,因其单文件,不依赖第三方,简介酷似flask,所以想要阅读一下源代码.代码写的很规整,一看就是特意调整过,专门为了让大家阅读.不想流水账一样记录过程,分享几个受用的点.</p>
+
+<h3>import</h3>
+
+<p>官方给出的最小bottle应用:</p>
+
+<pre><code>from bottle import route, run, template
+
+@route('/hello/&lt;name&gt;')
+def index(name):
+    return template('&lt;b&gt;Hello {{name}}&lt;/b&gt;!', name=name)
+
+run(host='localhost', port=8080)
+</code></pre>
+
+<p>只要你import了bottle任何一个变量,整个bottle.py文件都会被解释器加载执行.只不过其他的变量并没有加载到local中.当你再次import的时候,并不会再次执行bottle.py而是直接将名字加载到命令空间. 所以from ... import ... 并没有减少时间或者空间的占用,只是避免污染命名空间而已.</p>
+
+<h3>context local</h3>
+
+<p>刚接触到这个<a href="http://werkzeug.pocoo.org/docs/0.11/local/#module-werkzeug.local">名词</a>,这个命令并不是很合适,叫 thread local 更加合适,其实他就是<code>threading.local()</code>.是的作用域和线程绑定,你在线程A下给 <code>trd_local.a = 2</code>,在线程B根本看不到,完全隔离.实现上也很简单将变量和线程id进行绑定即可,在访问变量的时候判断一下当前线程id.</p>
+
+<p>这里面有一个hack,官方的库threading只提供了线程版本,如果你要使用gevent之类的第三方协程是不起作用的.</p>
+
+<p>解决的办法是打上猴子补丁</p>
+
+<pre><code>if not isinstance(threading.local(), local.local):
+   msg = "Bottle requires gevent.monkey.patch_all() (before import)"
+   raise RuntimeError(msg)
+</code></pre>
+
+<p>以前不是很理解为什么threading都需要打补丁,这下就明白了,不打的话换需要写多余的代码,判断一下到底从哪里import,打完就不需要了.</p>
+
+<p>context local 用处很光, 比如request, response对象都是内部封装了他.这使得我们能够创建出一个 <code>thread-safe</code> 的变量. <strong>一个全局的但是线程安全的变量.</strong></p>
+
+<h3>http处理流程</h3>
+
+<p>根据python wsgi规范,我们只要提供一个这种接口</p>
+
+<pre><code>def handler(environ, start_response):
+    """ Each instance of :class:'Bottle' is a WSGI application. """
+    return self.wsgi(environ, start_response)
+</code></pre>
+
+<p>所以有这种类</p>
+
+<pre><code>class Bottle():
+    def __call__(self, environ, start_response):       
+        pass
+</code></pre>
+
+<p>这就完成了服务器传递到框架的过程.</p>
+
+<h3>route, request, response</h3>
+
+<p>python在加载文件的时候,发现装饰器会立即执行装饰器的内容,此时就完成了url和view的绑定.</p>
+
+<p>request和response 是在每个请求过来的时候bind(其实就是初始化一个context local对象),每个线程唯一.</p>
+
+<h3>自动reload</h3>
+
+<pre><code>lockfile = os.environ.get('BOTTLE_LOCKFILE')
+bgcheck = FileCheckerThread(lockfile, interval)
+    with bgcheck:
+        server.run(app)
+    if bgcheck.status == 'reload':
+        sys.exit(3)
+</code></pre>
+
+<p>FileCheckerThread是一个线程,用with是很合适的,可以自动start和join.</p>
+
+<h3>巧妙的cache装饰器</h3>
+
+<p>如果想给一个类的变量,加一个一次性缓存,有一个很巧妙地方法:</p>
+
+<blockquote>
+  <p>装饰器是一个property,设置<strong>get</strong>方法,使得类在访问属性的时候可以执行计算,在一次计算之后,直接self.<strong>dict[func.</strong>name__] = value,这样就覆盖了这个property,变成了真正有值的属性.</p>
+</blockquote>
+
+  </div>
+</body>
+<!-- Global Site Tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-106796420-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments)};
+  gtag('js', new Date());
+  gtag('config', 'UA-106796420-1');
+</script>
+
+</html>

@@ -1,0 +1,77 @@
+<html>
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0 user-scalable=yes"/>
+    <link href="/main.css" rel="stylesheet" type="text/css">
+    <link href="/codehighlight.css" rel="stylesheet" type="text/css">
+    <link rel="alternate" type="application/atom+xml" href="/atom.xml" title="Atom feed">
+    <link rel="shortcut icon" href="/images/logo.bmp">
+    <title></title>
+</head>
+<body>
+  <div class="content">
+  <h2>程序的异常和错误</h2>
+
+<p>要去新公司上班了，提前学习一下go语言。 之前在更美的时候，有粗略的看过go。我记得当时看到讲解异常处理地方的时候，一阵反胃，掉一个函数判断一下返回值，这不得累死啊！</p>
+
+<p>想到以后要真的用这个语言，我就仔细学习了一下这个处理方式的好处。以下是我的阅读，思考结果。</p>
+
+<h3>错误和异常</h3>
+
+<p>但其实不是这样的, 错误和异常是要明确区分开的:</p>
+
+<blockquote>
+  <p>在Go中, 错误是可以被处理的，应该重试的问题，而异常是写代码/运行时没有意料到的想要直接奔溃的问题</p>
+</blockquote>
+
+<p>go语言的开发者不希望像java或者Python那样，将异常和错误混为一谈，所以设计了在返回值中增加错误的做法。</p>
+
+<p>有人可能要反驳说，Python的异常也分为Exception和Error，一个要处理，一个不要处理，所以我们也分异常和错误的。这种说法有一定道理，try catch系的语言确实也分为应该捕获的异常，和直接抛出的系统错误（SystemMemeoryOut）。</p>
+
+<p>但是try...catch...系的语言，在发生任何异常，而程序员没有捕获的情况下，会直接报错，层层抛出。而go语言是可以忽略子函数返回的错误继续执行的！</p>
+
+<h3>try...catch...正常和错误写法</h3>
+
+<p>try...catch...系的语言，有两个问题</p>
+
+<ol>
+<li>你不知道调用子函数会不会返回异常，所以偷懒的程序员都认为不会返回异常，有问题直接抛出来</li>
+<li>因为你没有考虑程序会返回异常，所以有些资源泄露了，有些不该运行的操作运行了</li>
+</ol>
+
+<p>eg.</p>
+
+<p>```bad python
+fd = open('result.txt')
+rsp = get('https://baidu.com')  --> 直接报错，可能是超时异常，这种情况下我们可以重试或者做一些别的操作，但是大多数偷懒程序员不会考虑这种情况。
+fd.write(rsp.text)
+fd.close()  --> 因为直接抛出了异常，导致这个文件没法释放，不过Python有 with 语句，是专门应对这种情况的。然而还是不如go清楚地定义defer省心</p>
+
+<pre><code>
+```bad python
+# 下订单
+减库存（）
+检查余额（)
+扣钱（）
+</code></pre>
+
+<p>这种情况下，每一步发生错误你都需要考虑如何回滚，也就退化成了每一个语句都考虑异常情况，用try catch反而会更费劲。但是在写重要的大规模程序的时候，本身就需要考虑每一个子过程是否执行成功了</p>
+
+<h3>总结</h3>
+
+<p>错误都是需要我们来考虑的, 可以通过代码检查工具强制每一个err都要处理，而异常是导致程序崩溃,无法往下执行的重大问题(数据库初始化失败,服务器就不该启起来)， 这就是go的思路</p>
+
+<p>而Python则是，你不需要考虑很多，有问题我就罢工，进程直接退出，你想我不罢工，那你自己挨个处理异常吧.这种环境下, 导致程序员不会主动去考虑异常, 然后正确打印日志, 释放资源. 也是因此, go语言库的代码质量要更高一些.</p>
+
+  </div>
+</body>
+<!-- Global Site Tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-106796420-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments)};
+  gtag('js', new Date());
+  gtag('config', 'UA-106796420-1');
+</script>
+
+</html>
