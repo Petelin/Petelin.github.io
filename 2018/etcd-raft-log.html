@@ -16,15 +16,16 @@
 
 <h3>Etcd项目的结构</h3>
 
-<p>---etcd</p>
+<div class="codehilite"><pre><span></span><code><span class="o">---</span><span class="n">etcd</span>
 
-<p>​   ---raft: 核心系统库</p>
+    <span class="o">---</span><span class="n">raft</span><span class="p">:</span> <span class="err">核心系统库</span>
 
-<p>​       ---node -> run() -> 写Ready()</p>
+        <span class="o">---</span><span class="n">node</span> <span class="o">-&gt;</span> <span class="n">run</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="err">写</span><span class="n">Ready</span><span class="p">()</span>
 
-<p>​   ---etcdserver: 包含了应用的对raft核心的包装.</p>
+    <span class="o">---</span><span class="n">etcdserver</span><span class="p">:</span> <span class="err">包含了应用的对</span><span class="n">raft核心的包装</span><span class="o">.</span>
 
-<p>​       ---raft -> start() -> 读Ready()</p>
+        <span class="o">---</span><span class="n">raft</span> <span class="o">-&gt;</span> <span class="n">start</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="err">读</span><span class="n">Ready</span><span class="p">()</span>
+</code></pre></div>
 
 <h3>etcd最让人confuse的地方</h3>
 
@@ -36,13 +37,13 @@
 
 <p>先看一下结构体</p>
 
-<pre><code>type raftLog struct {
-   storage Storage # 这个地方就是上层应用暴露给核心库的
-   unstable unstable
-   committed uint64
-   applied uint64
-}
-</code></pre>
+<div class="codehilite"><pre><span></span><code><span class="kd">type</span> <span class="nx">raftLog</span> <span class="kd">struct</span> <span class="p">{</span>
+   <span class="nx">storage</span> <span class="nx">Storage</span> <span class="err">#</span> <span class="nx">这个地方就是上层应用暴露给核心库的</span>
+   <span class="nx">unstable</span> <span class="nx">unstable</span>
+   <span class="nx">committed</span> <span class="kt">uint64</span>
+   <span class="nx">applied</span> <span class="kt">uint64</span>
+<span class="p">}</span>
+</code></pre></div>
 
 <p>这个里面committed, applied对应raft协议里的概念. </p>
 
