@@ -20,7 +20,7 @@
 
 <h3>一些链接</h3>
 
-<p>笔者通读了&lt;<Kafka 权威指南&gt;&gt;, 强烈推荐一下, 这本书深度广度都有, 是研究kafka不可多得的好书.</p>
+<p>笔者通读了 <Kafka 权威指南&gt; , 强烈推荐一下, 这本书深度广度都有, 是研究kafka不可多得的好书.</p>
 
 <p>另外一篇文章 <a href="https://mp.weixin.qq.com/s/x3l9eKN0-DKIfDOmpkal8Q">kafka七年止痒</a> 回顾了kafka从诞生到现在的变化. 包括了几乎所有的特性, 以及为什么需要他们, 怎么实现的他们.</p>
 
@@ -107,7 +107,7 @@
 <li>选择第一个“活”过来的 Replica（不一定是 ISR 中的）作为 Leader</li>
 </ul>
 
-<h4>如何选举 Leader</h4>
+<h4>如何选举 Leader -- 为什么需要在所有的broker里选择一个controler</h4>
 
 <p>最简单最直观的方案是，所有 Follower 都在 ZooKeeper 上设置一个 Watch，一旦 Leader 宕机，其对应的 ephemeral znode 会自动删除，此时所有 Follower 都尝试创建该节点，而创建成功者（ZooKeeper 保证只有一个能创建成功）即是新的 Leader，其它 Replica 即为 Follower。</p>
 

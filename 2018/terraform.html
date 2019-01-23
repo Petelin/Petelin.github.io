@@ -196,6 +196,27 @@ The resource block defines a resource that exists within the infrastructure. A r
 <span class="p">}</span>
 </code></pre></div>
 
+<h3>terrform 做backend</h3>
+
+<p>grab使用企业版的terrformhttps://www.terraform.io/docs/backends/types/terraform-enterprise.html</p>
+
+<p>就是用他们的云服务来存一些数据</p>
+
+<pre><code>terraform {
+  backend "atlas" {
+    name = "example_corp/networking-prod"
+    address = "https://app.terraform.io" # optional
+  }
+}
+
+data "terraform_remote_state" "foo" {
+  backend = "atlas"
+  config {
+    name = "example_corp/networking-prod"
+  }
+}
+</code></pre>
+
 <h3>命令</h3>
 
 <h4>init</h4>

@@ -16,13 +16,19 @@
 
 <p>Go 提供两个工具, 一个在net包下, 一个在pprof包下, net包通过启动一个网络服务, 对外暴露你程序信息, 而pprof提供一种编程的方式, 从你指定时间开始到指定时间结束, 把信息记录到一个writer中.</p>
 
+<h3>重要更新</h3>
+
+<p>现在可以获得一个交互式的前端页面, 不需要下面那么繁琐去获得火焰图</p>
+
+<p><code>go tool pprof  -http=:8080 profile_10.10.73.173_20181206-070730.pb.gz</code></p>
+
 <h3>pprof 实现</h3>
 
 <p>具体实现我没看过, 但是猜一下, 应该是通过采样的方式给cpu快照, 读取寄存器的状态, </p>
 
 <p>快照这一点很重要, 尤其是一个大型web服务, 必须通过压测才能准确的记录下来, cpu执行的代码, 否者看到的都是runtime的一些方法.</p>
 
-<h3>对一个endpoint进行cpu pprof</h3>
+<h3>对一个代码片段进行profile</h3>
 
 <div class="codehilite"><pre><span></span><code><span class="kd">func</span> <span class="nx">Handler</span><span class="p">(</span><span class="nx">meta</span> <span class="nx">endpoint</span><span class="p">.</span><span class="nx">Meta</span><span class="p">,</span> <span class="nx">next</span> <span class="nx">endpoint</span><span class="p">.</span><span class="nx">Endpoint</span><span class="p">)</span> <span class="nx">endpoint</span><span class="p">.</span><span class="nx">Endpoint</span> <span class="p">{</span>
     <span class="nx">profMapLock</span><span class="p">.</span><span class="nx">Lock</span><span class="p">()</span>
