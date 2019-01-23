@@ -16,16 +16,16 @@
 
 <h3>Etcd项目的结构</h3>
 
-<div class="codehilite"><pre><span></span><code><span class="o">---</span><span class="n">etcd</span>
+<pre><code>---etcd
 
-    <span class="o">---</span><span class="n">raft</span><span class="p">:</span> <span class="err">核心系统库</span>
+    ---raft: 核心系统库
 
-        <span class="o">---</span><span class="n">node</span> <span class="o">-&gt;</span> <span class="n">run</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="err">写</span><span class="n">Ready</span><span class="p">()</span>
+        ---node -&gt; run() -&gt; 写Ready()
 
-    <span class="o">---</span><span class="n">etcdserver</span><span class="p">:</span> <span class="err">包含了应用的对</span><span class="n">raft核心的包装</span><span class="o">.</span>
+    ---etcdserver: 包含了应用的对raft核心的包装.
 
-        <span class="o">---</span><span class="n">raft</span> <span class="o">-&gt;</span> <span class="n">start</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="err">读</span><span class="n">Ready</span><span class="p">()</span>
-</code></pre></div>
+        ---raft -&gt; start() -&gt; 读Ready()
+</code></pre>
 
 <h3>etcd最让人confuse的地方</h3>
 
