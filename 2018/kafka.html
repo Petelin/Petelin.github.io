@@ -28,7 +28,45 @@
 
 <p>下面是笔者认为比较track的东西, 记起来防止忘记.</p>
 
-<h3>Exact Once</h3>
+<h3>1. 顺序</h3>
+
+<blockquote>
+  <p>通过生产者发送到特定主题的消息将按其发送顺追加。那就是，如果记录M1和M2由同一个生产者发送，且M1先发送，那么M1的偏移量会小于M2且更早出现在中志中。</p>
+</blockquote>
+
+<p>这是怎么做到的呢? 原因就在一个producer里面有一个queue, 用来对你要写的log进行排序然后batch的形式发送.</p>
+
+<p>同事还要保证一个一个mute发出去, Broker收到了,才能发下一个, 否则虽然是一个一个发的, 但是到Broker的时候可能是乱序的. 也就是说只能有一个connection</p>
+
+<div class="codehilite"><pre><span></span><code><span class="k">this</span><span class="o">.</span><span class="na">guaranteeMessageOrder</span> <span class="o">=</span> <span class="o">(</span><span class="n">config</span><span class="o">.</span><span class="na">getInt</span><span class="o">(</span><span class="n">ProducerConfig</span><span class="o">.</span><span class="na">MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION</span><span class="o">)</span> <span class="o">==</span> <span class="mi">1</span><span class="o">)</span>
+</code></pre></div>
+
+<p>如果只有一个connection, m每次send的时候都会mute对应TP, 阻止并发.这样才可以保证有序.</p>
+
+<p>参考: <a href="http://matt33.com/2017/09/10/produccer-end/">http://matt33.com/2017/09/10/produccer-end/</a></p>
+
+<h3>2. 消费者故障</h3>
+
+<blockquote>
+  <p>在订阅了一组主题后，当poll(Duration)方法被调用时，该消费都会自动加入组。poll这个API被设计成确保消费者活力。只要你持续的调用poll，该消费者将会保持在组中，持续的从被分配的分区中接收到消息。在底层，该消费会发送定期心跳信号给服务器。如果消费都崩溃或者在持续session.timeout.ms时间内无法发送心跳信号，则该消费者将会被认为已经死亡，并且它的分区将会被重新分配。</p>
+</blockquote>
+
+<p>这里讨论的是多个消费者组成的消费组. 一个消费者本来是固定消费一个分区. 如果</p>
+
+<ul>
+<li>持续发送心跳, 但是不poll新的日志() --- 一直在处理
+客户端的实现为了避免在这种情况下消费者被分区持续持有，我们用max.poll.interval.ms配置提供了一个活锁发现机制。如果你在配置的max interval内没有调用poll方法，该客户端会主动的离开组，以便其它的消费者可以接管它的分区。<strong>这个也不应该设置的过大, 否则如果某个消费着真的有问题, 也没办法解锁其所拥有的分区了</strong></li>
+<li>不发送心跳了 --- 机器死了
+自然会重新balance</li>
+</ul>
+
+<h4>暂停/恢复消费</h4>
+
+<p>Kafka支持使用pause(Collection)和resume(Collection)动态控制消费流，以便在未来的轮询(持续时间)调用中分别暂停指定分区上的消费和恢复指定暂停分区上的消费。</p>
+
+<p>这个本来是用来控制速度的. 但是如果用来在处理log失败的时候, 暂停消费直至处理成功, 好像也是可以的. 因为只有正常流程才会暂停, 所以也不用担心假死什么的. </p>
+
+<h3>3. Exact Once</h3>
 
 <p>为什么追求原子性:</p>
 
@@ -37,9 +75,11 @@
 <li>结果可控,你想写入一条, 结果因为重试写入多条, 或者乱序</li>
 </ol>
 
-<p>严格的说, <code>Kafka</code>支持write exact once, 但不支持write exact once</p>
+<p>严格的说, <code>Kafka</code>支持生产者仅仅写入一次不重复, 但是没法做到消费者只消费一次(因为使用户自己消费的, 成不成功是对于kafka是未知的)</p>
 
-<p>现在的<strong>kafka已经支持过滤重复的消息</strong>. 所以多次重试写数据, broker也能保证真正入流的只有一条. </p>
+<h4>生产者</h4>
+
+<p>在Exactly once语义下, 多次重试写数据, broker也能保证流里只有一条. </p>
 
 <p>实现方法: </p>
 
@@ -52,6 +92,8 @@
   </ul>
 </blockquote>
 
+<h4>消费者</h4>
+
 <p>但是consumer读的时候就复杂多了, 因为处理和提交是两个过程/系统, 无论如何也没法保证原子性</p>
 
 <ul>
@@ -59,7 +101,13 @@
 <li>就要原子性, 把处理结果和提交放在一起. 这个东西非常有意思. 就是让<strong>你自己去记录offset</strong>, 比如你处理之后要把数据更新到MySQL(没写之前都是没用的), 那么开启一个事物, 把Offset也一并记录在MySQL里.这样就能保证数据被Handle的Offset, 之后不会在被Handle. 但是缺点很大很大. 你需要自己实现一套Offset Commit语义, 而且对不不同的Handle, 实现还不一样(有的写MySQL, 有的写ES, 诸如此类). 这个点子书上也有, 但是在 <a href="https://www.infoq.cn/article/kafka-analysis-part-1">这篇文章</a>里才真正看懂.</li>
 </ul>
 
-<h3>High Availabl</h3>
+<p>外置偏移量使得支持exactly once.</p>
+
+<blockquote>
+  <p>消费者应用程序非必须使用Kafka内置的偏移量存储，即可以在自己选择的一个存储中保存偏移量。这样做的主要用例是允许应用程序在同一个系统中保存偏移量和消费的结果，即以原子方式保存结果和偏移量。这并不总是可行的，但是当它出现时，它将使消费完全原子化，并提供“恰好一次”语义，这比使用Kafka的偏移提交功能得到的默认“至少一次”语义更强。</p>
+</blockquote>
+
+<h3>4. High Availabl</h3>
 
 <h4>replica 的设计</h4>
 
