@@ -73,10 +73,10 @@
 <blockquote>
   <p>指针的方法集是全部的方法</p>
   
-  <p>结构体集是结构体接收者方法</p>
+  <p>结构体的方法集只有那些接受结构体的方法</p>
 </blockquote>
 
-<p>因为在go里可以将一个方法转化为函数</p>
+<p>因为在go里可以将一个方法(method)转化为函数(function), 而这个转化得到的方法集, 通过struct和通过pointer struct是不一样的</p>
 
 <div class="codehilite"><pre><span></span><code><span class="kd">func</span> <span class="nx">main</span><span class="p">()</span> <span class="p">{</span>
     <span class="c1">// we have a concept name: method collection</span>
@@ -94,8 +94,6 @@
     <span class="nx">Bar</span><span class="p">(</span><span class="nx">b</span><span class="p">)</span>
 <span class="p">}</span>
 </code></pre></div>
-
-<p>深入了解之后还是很清楚的,对不对?</p>
 
   </div>
 </body>
