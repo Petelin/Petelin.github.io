@@ -53,7 +53,7 @@
 <span class="mi">17</span>
 <span class="mi">18</span>  <span class="k">try</span><span class="p">:</span>
 <span class="mi">19</span>     <span class="n">connections</span> <span class="o">=</span> <span class="p">{};</span> <span class="n">requests</span> <span class="o">=</span> <span class="p">{};</span> <span class="n">responses</span> <span class="o">=</span> <span class="p">{}</span>
-<span class="mi">20</span>     <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
+<span class="mi">20</span>     <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
 <span class="mi">21</span>        <span class="n">events</span> <span class="o">=</span> <span class="n">epoll</span><span class="o">.</span><span class="n">poll</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
 <span class="mi">22</span>        <span class="k">for</span> <span class="n">fileno</span><span class="p">,</span> <span class="n">event</span> <span class="ow">in</span> <span class="n">events</span><span class="p">:</span>
 <span class="mi">23</span>           <span class="k">if</span> <span class="n">fileno</span> <span class="o">==</span> <span class="n">serversocket</span><span class="o">.</span><span class="n">fileno</span><span class="p">():</span>
@@ -67,7 +67,7 @@
 <span class="mi">31</span>              <span class="n">requests</span><span class="p">[</span><span class="n">fileno</span><span class="p">]</span> <span class="o">+=</span> <span class="n">connections</span><span class="p">[</span><span class="n">fileno</span><span class="p">]</span><span class="o">.</span><span class="n">recv</span><span class="p">(</span><span class="mi">1024</span><span class="p">)</span>
 <span class="mi">32</span>              <span class="k">if</span> <span class="n">EOL1</span> <span class="ow">in</span> <span class="n">requests</span><span class="p">[</span><span class="n">fileno</span><span class="p">]</span> <span class="ow">or</span> <span class="n">EOL2</span> <span class="ow">in</span> <span class="n">requests</span><span class="p">[</span><span class="n">fileno</span><span class="p">]:</span>
 <span class="mi">33</span>                 <span class="n">epoll</span><span class="o">.</span><span class="n">modify</span><span class="p">(</span><span class="n">fileno</span><span class="p">,</span> <span class="n">select</span><span class="o">.</span><span class="n">EPOLLOUT</span><span class="p">)</span>
-<span class="mi">34</span>                 <span class="k">print</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="o">*</span><span class="mi">40</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="n">requests</span><span class="p">[</span><span class="n">fileno</span><span class="p">]</span><span class="o">.</span><span class="n">decode</span><span class="p">()[:</span><span class="o">-</span><span class="mi">2</span><span class="p">])</span>
+<span class="mi">34</span>                 <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="o">*</span><span class="mi">40</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="n">requests</span><span class="p">[</span><span class="n">fileno</span><span class="p">]</span><span class="o">.</span><span class="n">decode</span><span class="p">()[:</span><span class="o">-</span><span class="mi">2</span><span class="p">])</span>
 <span class="mi">35</span>           <span class="k">elif</span> <span class="n">event</span> <span class="o">&amp;</span> <span class="n">select</span><span class="o">.</span><span class="n">EPOLLOUT</span><span class="p">:</span>
 <span class="mi">36</span>              <span class="n">byteswritten</span> <span class="o">=</span> <span class="n">connections</span><span class="p">[</span><span class="n">fileno</span><span class="p">]</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">responses</span><span class="p">[</span><span class="n">fileno</span><span class="p">])</span>
 <span class="mi">37</span>              <span class="n">responses</span><span class="p">[</span><span class="n">fileno</span><span class="p">]</span> <span class="o">=</span> <span class="n">responses</span><span class="p">[</span><span class="n">fileno</span><span class="p">][</span><span class="n">byteswritten</span><span class="p">:]</span>
@@ -115,12 +115,12 @@
 <span class="mi">17</span>
 <span class="mi">18</span>  <span class="k">try</span><span class="p">:</span>
 <span class="mi">19</span>     <span class="n">connections</span> <span class="o">=</span> <span class="p">{};</span> <span class="n">requests</span> <span class="o">=</span> <span class="p">{};</span> <span class="n">responses</span> <span class="o">=</span> <span class="p">{}</span>
-<span class="mi">20</span>     <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
+<span class="mi">20</span>     <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
 <span class="mi">21</span>        <span class="n">events</span> <span class="o">=</span> <span class="n">epoll</span><span class="o">.</span><span class="n">poll</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
 <span class="mi">22</span>        <span class="k">for</span> <span class="n">fileno</span><span class="p">,</span> <span class="n">event</span> <span class="ow">in</span> <span class="n">events</span><span class="p">:</span>
 <span class="mi">23</span>           <span class="k">if</span> <span class="n">fileno</span> <span class="o">==</span> <span class="n">serversocket</span><span class="o">.</span><span class="n">fileno</span><span class="p">():</span>
 <span class="mi">24</span>              <span class="k">try</span><span class="p">:</span>
-<span class="mi">25</span>                 <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
+<span class="mi">25</span>                 <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
 <span class="mi">26</span>                    <span class="n">connection</span><span class="p">,</span> <span class="n">address</span> <span class="o">=</span> <span class="n">serversocket</span><span class="o">.</span><span class="n">accept</span><span class="p">()</span>
 <span class="mi">27</span>                    <span class="n">connection</span><span class="o">.</span><span class="n">setblocking</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
 <span class="mi">28</span>                    <span class="n">epoll</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">connection</span><span class="o">.</span><span class="n">fileno</span><span class="p">(),</span> <span class="n">select</span><span class="o">.</span><span class="n">EPOLLIN</span> <span class="o">|</span> <span class="n">select</span><span class="o">.</span><span class="n">EPOLLET</span><span class="p">)</span>
@@ -131,13 +131,13 @@
 <span class="mi">33</span>                 <span class="k">pass</span>
 <span class="mi">34</span>           <span class="k">elif</span> <span class="n">event</span> <span class="o">&amp;</span> <span class="n">select</span><span class="o">.</span><span class="n">EPOLLIN</span><span class="p">:</span>
 <span class="mi">35</span>              <span class="k">try</span><span class="p">:</span>
-<span class="mi">36</span>                 <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
+<span class="mi">36</span>                 <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
 <span class="mi">37</span>                    <span class="n">requests</span><span class="p">[</span><span class="n">fileno</span><span class="p">]</span> <span class="o">+=</span> <span class="n">connections</span><span class="p">[</span><span class="n">fileno</span><span class="p">]</span><span class="o">.</span><span class="n">recv</span><span class="p">(</span><span class="mi">1024</span><span class="p">)</span>
 <span class="mi">38</span>              <span class="k">except</span> <span class="n">socket</span><span class="o">.</span><span class="n">error</span><span class="p">:</span>
 <span class="mi">39</span>                 <span class="k">pass</span>
 <span class="mi">40</span>              <span class="k">if</span> <span class="n">EOL1</span> <span class="ow">in</span> <span class="n">requests</span><span class="p">[</span><span class="n">fileno</span><span class="p">]</span> <span class="ow">or</span> <span class="n">EOL2</span> <span class="ow">in</span> <span class="n">requests</span><span class="p">[</span><span class="n">fileno</span><span class="p">]:</span>
 <span class="mi">41</span>                 <span class="n">epoll</span><span class="o">.</span><span class="n">modify</span><span class="p">(</span><span class="n">fileno</span><span class="p">,</span> <span class="n">select</span><span class="o">.</span><span class="n">EPOLLOUT</span> <span class="o">|</span> <span class="n">select</span><span class="o">.</span><span class="n">EPOLLET</span><span class="p">)</span>
-<span class="mi">42</span>                 <span class="k">print</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="o">*</span><span class="mi">40</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="n">requests</span><span class="p">[</span><span class="n">fileno</span><span class="p">]</span><span class="o">.</span><span class="n">decode</span><span class="p">()[:</span><span class="o">-</span><span class="mi">2</span><span class="p">])</span>
+<span class="mi">42</span>                 <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="o">*</span><span class="mi">40</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="n">requests</span><span class="p">[</span><span class="n">fileno</span><span class="p">]</span><span class="o">.</span><span class="n">decode</span><span class="p">()[:</span><span class="o">-</span><span class="mi">2</span><span class="p">])</span>
 <span class="mi">43</span>           <span class="k">elif</span> <span class="n">event</span> <span class="o">&amp;</span> <span class="n">select</span><span class="o">.</span><span class="n">EPOLLOUT</span><span class="p">:</span>
 <span class="mi">44</span>              <span class="k">try</span><span class="p">:</span>
 <span class="mi">45</span>                 <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="n">responses</span><span class="p">[</span><span class="n">fileno</span><span class="p">])</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
@@ -182,5 +182,15 @@
   gtag('js', new Date());
   gtag('config', 'UA-106796420-1');
 </script>
+<script>
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?2e8594e80b736182ce88fcd89a36402d";
+  var s = document.getElementsByTagName("script")[0];
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+
 
 </html>

@@ -35,7 +35,7 @@
 <div class="codehilite"><pre><span></span><code><span class="c1"># Method on Future class.</span>
 <span class="k">def</span> <span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
     <span class="c1"># Tell Task to resume me here.</span>
-    <span class="k">while</span> <span class="bp">True</span>
+    <span class="k">while</span> <span class="kc">True</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ready</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">result</span>
         <span class="k">yield</span> <span class="bp">self</span>
@@ -51,19 +51,19 @@
     <span class="n">index</span> <span class="o">=</span> <span class="mi">0</span>
     <span class="k">while</span> <span class="n">index</span> <span class="o">&lt;</span> <span class="n">up_to</span><span class="p">:</span>
         <span class="n">jump</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">index</span>
-        <span class="k">if</span> <span class="n">jump</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">jump</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">jump</span> <span class="o">=</span> <span class="mi">1</span>
         <span class="n">index</span> <span class="o">+=</span> <span class="n">jump</span>
 
 
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
     <span class="n">iterator</span> <span class="o">=</span> <span class="n">jumping_range</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
-    <span class="k">print</span><span class="p">(</span><span class="nb">next</span><span class="p">(</span><span class="n">iterator</span><span class="p">))</span>  <span class="c1"># 0</span>
-    <span class="k">print</span><span class="p">(</span><span class="n">iterator</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>  <span class="c1"># 2</span>
-    <span class="k">print</span><span class="p">(</span><span class="nb">next</span><span class="p">(</span><span class="n">iterator</span><span class="p">))</span>  <span class="c1"># 3</span>
-    <span class="k">print</span><span class="p">(</span><span class="n">iterator</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>  <span class="c1"># 2</span>
+    <span class="nb">print</span><span class="p">(</span><span class="nb">next</span><span class="p">(</span><span class="n">iterator</span><span class="p">))</span>  <span class="c1"># 0</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">iterator</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>  <span class="c1"># 2</span>
+    <span class="nb">print</span><span class="p">(</span><span class="nb">next</span><span class="p">(</span><span class="n">iterator</span><span class="p">))</span>  <span class="c1"># 3</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">iterator</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>  <span class="c1"># 2</span>
     <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">iterator</span><span class="p">:</span>
-        <span class="k">print</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>  <span class="c1"># 3, 4</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>  <span class="c1"># 3, 4</span>
 </code></pre></div>
 
 <p>iterrator.send(None) is equal to next(iterator)</p>
@@ -105,5 +105,15 @@ def coroutine():
   gtag('js', new Date());
   gtag('config', 'UA-106796420-1');
 </script>
+<script>
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?2e8594e80b736182ce88fcd89a36402d";
+  var s = document.getElementsByTagName("script")[0];
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+
 
 </html>

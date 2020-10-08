@@ -100,22 +100,22 @@ The resource block defines a resource that exists within the infrastructure. A r
   <span class="n">default</span> <span class="o">=</span> <span class="s2">&quot;us-east-1&quot;</span>
 <span class="p">}</span>
 
-<span class="n">varibale</span> <span class="err">就是在声明一个变量</span><span class="p">,</span> <span class="err">如果写了</span><span class="n">default</span><span class="p">,</span> <span class="err">那么他是可有可无的</span><span class="o">.</span> <span class="err">如果没有写</span><span class="o">.</span> <span class="err">那么</span><span class="n">plan都不会通过</span><span class="p">,</span> <span class="err">因为没有赋值</span><span class="o">.</span>
+<span class="n">varibale</span> <span class="n">就是在声明一个变量</span><span class="p">,</span> <span class="n">如果写了default</span><span class="p">,</span> <span class="n">那么他是可有可无的</span><span class="o">.</span> <span class="n">如果没有写</span><span class="o">.</span> <span class="n">那么plan都不会通过</span><span class="p">,</span> <span class="n">因为没有赋值</span><span class="o">.</span>
 </code></pre></div>
 
 <p>使用变量</p>
 
 <div class="codehilite"><pre><span></span><code><span class="n">provider</span> <span class="s2">&quot;aws&quot;</span> <span class="p">{</span>
-  <span class="n">access_key</span> <span class="o">=</span> <span class="s2">&quot;${var.access_key}&quot;</span>
-  <span class="n">secret_key</span> <span class="o">=</span> <span class="s2">&quot;${var.secret_key}&quot;</span>
-  <span class="n">region</span>     <span class="o">=</span> <span class="s2">&quot;${var.region}&quot;</span>
+  <span class="n">access_key</span> <span class="o">=</span> <span class="s2">&quot;$</span><span class="si">{var.access_key}</span><span class="s2">&quot;</span>
+  <span class="n">secret_key</span> <span class="o">=</span> <span class="s2">&quot;$</span><span class="si">{var.secret_key}</span><span class="s2">&quot;</span>
+  <span class="n">region</span>     <span class="o">=</span> <span class="s2">&quot;$</span><span class="si">{var.region}</span><span class="s2">&quot;</span>
 <span class="p">}</span>
 </code></pre></div>
 
 <p>给变量分配值</p>
 
 <ol>
-<li><div class="codehilite"><pre><span></span><code><span class="err">$</span> <span class="n">terraform</span> <span class="nb">apply</span> \
+<li><div class="codehilite"><pre><span></span><code><span class="err">$</span> <span class="n">terraform</span> <span class="n">apply</span> \
  <span class="o">-</span><span class="n">var</span> <span class="s1">&#39;access_key=foo&#39;</span> \
  <span class="o">-</span><span class="n">var</span> <span class="s1">&#39;secret_key=bar&#39;</span>
 </code></pre></div></li>
@@ -127,11 +127,11 @@ The resource block defines a resource that exists within the infrastructure. A r
 <span class="n">access_key</span> <span class="o">=</span> <span class="s2">&quot;foo&quot;</span>
 <span class="n">secret_key</span> <span class="o">=</span> <span class="s2">&quot;bar&quot;</span>
 
-<span class="n">terraform</span><span class="o">.</span><span class="n">tfvars</span> <span class="ow">or</span> <span class="o">*.</span><span class="n">auto</span><span class="o">.</span><span class="n">tfvars</span> <span class="n">present</span> <span class="ow">in</span> <span class="n">the</span> <span class="n">current</span> <span class="n">directory</span><span class="p">,</span> <span class="n">Terraform</span> <span class="n">automatically</span> <span class="n">loads</span> <span class="n">them</span> <span class="n">to</span> <span class="n">populate</span> <span class="n">variables</span><span class="o">.</span> <span class="k">else</span> <span class="n">use</span> <span class="o">--</span><span class="n">var</span><span class="o">-</span><span class="nb">file</span>
+<span class="n">terraform</span><span class="o">.</span><span class="n">tfvars</span> <span class="ow">or</span> <span class="o">*.</span><span class="n">auto</span><span class="o">.</span><span class="n">tfvars</span> <span class="n">present</span> <span class="ow">in</span> <span class="n">the</span> <span class="n">current</span> <span class="n">directory</span><span class="p">,</span> <span class="n">Terraform</span> <span class="n">automatically</span> <span class="n">loads</span> <span class="n">them</span> <span class="n">to</span> <span class="n">populate</span> <span class="n">variables</span><span class="o">.</span> <span class="k">else</span> <span class="n">use</span> <span class="o">--</span><span class="n">var</span><span class="o">-</span><span class="n">file</span>
 
-<span class="err">$</span> <span class="n">terraform</span> <span class="nb">apply</span> \
- <span class="o">-</span><span class="n">var</span><span class="o">-</span><span class="nb">file</span><span class="o">=</span><span class="s2">&quot;secret.tfvars&quot;</span> \
- <span class="o">-</span><span class="n">var</span><span class="o">-</span><span class="nb">file</span><span class="o">=</span><span class="s2">&quot;production.tfvars&quot;</span>
+<span class="err">$</span> <span class="n">terraform</span> <span class="n">apply</span> \
+ <span class="o">-</span><span class="n">var</span><span class="o">-</span><span class="n">file</span><span class="o">=</span><span class="s2">&quot;secret.tfvars&quot;</span> \
+ <span class="o">-</span><span class="n">var</span><span class="o">-</span><span class="n">file</span><span class="o">=</span><span class="s2">&quot;production.tfvars&quot;</span>
 </code></pre></div></li>
 <li><p>ui input, 命令行会问你</p></li>
 <li><p>使用module, 从外部传过来(最经常的使用方式)</p></li>
@@ -157,7 +157,7 @@ The resource block defines a resource that exists within the infrastructure. A r
 <span class="p">}</span>
 
 <span class="n">resource</span> <span class="s2">&quot;aws_instance&quot;</span> <span class="s2">&quot;web&quot;</span> <span class="p">{</span>
-  <span class="n">ami</span>           <span class="o">=</span> <span class="s2">&quot;${data.aws_ami.web.id}&quot;</span>
+  <span class="n">ami</span>           <span class="o">=</span> <span class="s2">&quot;$</span><span class="si">{data.aws_ami.web.id}</span><span class="s2">&quot;</span>
   <span class="n">instance_type</span> <span class="o">=</span> <span class="s2">&quot;t1.micro&quot;</span>
 <span class="p">}</span>
 </code></pre></div>
@@ -173,13 +173,13 @@ The resource block defines a resource that exists within the infrastructure. A r
 
 <span class="c1"># A computed default name prefix</span>
 <span class="nb">locals</span> <span class="p">{</span>
-  <span class="n">default_name_prefix</span> <span class="o">=</span> <span class="s2">&quot;${var.project_name}-web&quot;</span>
+  <span class="n">default_name_prefix</span> <span class="o">=</span> <span class="s2">&quot;$</span><span class="si">{var.project_name}</span><span class="s2">-web&quot;</span>
   <span class="n">name_prefix</span>         <span class="o">=</span> <span class="s2">&quot;${var.name_prefix != &quot;&quot; ? var.name_prefix : local.default_name_prefix}&quot;</span>
 <span class="p">}</span>
 
 <span class="c1"># Local values can be interpolated elsewhere using the &quot;local.&quot; prefix.</span>
 <span class="n">resource</span> <span class="s2">&quot;aws_s3_bucket&quot;</span> <span class="s2">&quot;files&quot;</span> <span class="p">{</span>
-  <span class="n">bucket</span> <span class="o">=</span> <span class="s2">&quot;${local.name_prefix}-files&quot;</span>
+  <span class="n">bucket</span> <span class="o">=</span> <span class="s2">&quot;$</span><span class="si">{local.name_prefix}</span><span class="s2">-files&quot;</span>
   <span class="c1"># ...</span>
 <span class="p">}</span>
 </code></pre></div>
@@ -247,5 +247,15 @@ data "terraform_remote_state" "foo" {
   gtag('js', new Date());
   gtag('config', 'UA-106796420-1');
 </script>
+<script>
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?2e8594e80b736182ce88fcd89a36402d";
+  var s = document.getElementsByTagName("script")[0];
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+
 
 </html>

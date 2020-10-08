@@ -70,24 +70,24 @@ def gen_data(size):
         <span class="n">pipe_out</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">gen_data</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
     <span class="c1"># end EOF</span>
     <span class="n">pipe_out</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
-    <span class="k">print</span><span class="p">(</span><span class="s1">&#39;send done.&#39;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;send done.&#39;</span><span class="p">)</span>
 
 
 <span class="k">def</span> <span class="nf">get_data_task</span><span class="p">(</span><span class="n">pipe_in</span><span class="p">):</span>
-    <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
+    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
         <span class="n">data</span> <span class="o">=</span> <span class="n">pipe_in</span><span class="o">.</span><span class="n">recv</span><span class="p">()</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">data</span><span class="p">:</span>
             <span class="k">break</span>
-    <span class="k">print</span><span class="p">(</span><span class="s2">&quot;recv done.&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;recv done.&quot;</span><span class="p">)</span>
 
 
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
-    <span class="n">pipe_in</span><span class="p">,</span> <span class="n">pipe_out</span> <span class="o">=</span> <span class="n">multiprocessing</span><span class="o">.</span><span class="n">Pipe</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
+    <span class="n">pipe_in</span><span class="p">,</span> <span class="n">pipe_out</span> <span class="o">=</span> <span class="n">multiprocessing</span><span class="o">.</span><span class="n">Pipe</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
     <span class="n">p</span> <span class="o">=</span> <span class="n">multiprocessing</span><span class="o">.</span><span class="n">Process</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="n">send_data_task</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">pipe_out</span><span class="p">,),</span> <span class="n">kwargs</span><span class="o">=</span><span class="p">())</span>
     <span class="n">p1</span> <span class="o">=</span> <span class="n">multiprocessing</span><span class="o">.</span><span class="n">Process</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="n">get_data_task</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">pipe_in</span><span class="p">,),</span> <span class="n">kwargs</span><span class="o">=</span><span class="p">())</span>
 
-    <span class="n">p</span><span class="o">.</span><span class="n">daemon</span> <span class="o">=</span> <span class="bp">True</span>
-    <span class="n">p1</span><span class="o">.</span><span class="n">daemon</span> <span class="o">=</span> <span class="bp">True</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">daemon</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">p1</span><span class="o">.</span><span class="n">daemon</span> <span class="o">=</span> <span class="kc">True</span>
     <span class="kn">import</span> <span class="nn">time</span>
 
     <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
@@ -95,7 +95,7 @@ def gen_data(size):
     <span class="n">p</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
     <span class="n">p</span><span class="o">.</span><span class="n">join</span><span class="p">()</span>
     <span class="n">p1</span><span class="o">.</span><span class="n">join</span><span class="p">()</span>
-    <span class="k">print</span><span class="p">(</span><span class="s1">&#39;through pipe&#39;</span><span class="p">,</span> <span class="n">data_size</span> <span class="o">/</span> <span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span><span class="p">),</span> <span class="s1">&#39;KB/s&#39;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;through pipe&#39;</span><span class="p">,</span> <span class="n">data_size</span> <span class="o">/</span> <span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span><span class="p">),</span> <span class="s1">&#39;KB/s&#39;</span><span class="p">)</span>
 </code></pre></div>
 
 <p>注意这个地方 Pipe(True)默认为双工的, 然而标准的是单工的, 单工缓冲区大小在OSX上有64KB, 设置缓存区是为了协调流入流出速率, 否者写的太快, 没人取走也是浪费.
@@ -268,5 +268,15 @@ if __name__ == '__main__':
   gtag('js', new Date());
   gtag('config', 'UA-106796420-1');
 </script>
+<script>
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?2e8594e80b736182ce88fcd89a36402d";
+  var s = document.getElementsByTagName("script")[0];
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+
 
 </html>

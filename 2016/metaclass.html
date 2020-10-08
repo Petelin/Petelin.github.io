@@ -20,10 +20,10 @@
 
 <div class="codehilite"><pre><span></span><code><span class="ch">#!/usr/bin/env python</span>
 <span class="k">class</span> <span class="nc">Type</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
-    <span class="k">print</span><span class="p">(</span><span class="s2">&quot;运行到&quot;</span><span class="p">,</span> <span class="s2">&quot;Type&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;运行到&quot;</span><span class="p">,</span> <span class="s2">&quot;Type&quot;</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">type_</span><span class="p">):</span>
-        <span class="k">print</span><span class="p">(</span><span class="s2">&quot;set type&quot;</span><span class="p">,</span> <span class="n">type_</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;set type&quot;</span><span class="p">,</span> <span class="n">type_</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">type_class</span> <span class="o">=</span> <span class="n">type_</span>
 
@@ -32,10 +32,10 @@
 
 
 <span class="k">class</span> <span class="nc">TypeCheckMeta</span><span class="p">(</span><span class="nb">type</span><span class="p">):</span>
-    <span class="k">print</span><span class="p">(</span><span class="s2">&quot;运行到&quot;</span><span class="p">,</span> <span class="s2">&quot;TypeCheckMeta&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;运行到&quot;</span><span class="p">,</span> <span class="s2">&quot;TypeCheckMeta&quot;</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">bases</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
-        <span class="k">print</span><span class="p">(</span><span class="s2">&quot;元类 __new__&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;元类 __new__&quot;</span><span class="p">)</span>
         <span class="n">inst</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">TypeCheckMeta</span><span class="p">,</span> <span class="bp">cls</span><span class="p">)</span><span class="o">.</span><span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">bases</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span>
         <span class="n">inst</span><span class="o">.</span><span class="n">_fileds</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">dict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
@@ -44,40 +44,40 @@
         <span class="k">return</span> <span class="n">inst</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="k">print</span><span class="p">(</span><span class="s2">&quot;元类 __init__&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;元类 __init__&quot;</span><span class="p">)</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">TypeCheckMeta</span><span class="p">,</span> <span class="bp">cls</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="k">print</span><span class="p">(</span><span class="s2">&quot;元类 __call__&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;元类 __call__&quot;</span><span class="p">)</span>
         <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">TypeCheckMeta</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__call__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
 
 <span class="k">class</span> <span class="nc">Test</span><span class="p">(</span><span class="n">metaclass</span><span class="o">=</span><span class="n">TypeCheckMeta</span><span class="p">):</span>
-    <span class="k">print</span><span class="p">(</span><span class="s2">&quot;运行到&quot;</span><span class="p">,</span> <span class="s2">&quot;Test&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;运行到&quot;</span><span class="p">,</span> <span class="s2">&quot;Test&quot;</span><span class="p">)</span>
     <span class="n">name</span> <span class="o">=</span> <span class="n">Type</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span>
     <span class="n">age</span> <span class="o">=</span> <span class="n">Type</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="k">print</span><span class="p">(</span><span class="s2">&quot;类 __new__&quot;</span><span class="p">)</span>
-        <span class="k">print</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;类 __new__&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">)</span>
         <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">Test</span><span class="p">,</span> <span class="bp">cls</span><span class="p">)</span><span class="o">.</span><span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span>
 
 
     <span class="k">def</span> <span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
-        <span class="k">print</span><span class="p">(</span><span class="s2">&quot;类 __setattr__&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;类 __setattr__&quot;</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fileds</span><span class="p">:</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fileds</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">vaild</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
                 <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;invaild...&quot;</span><span class="p">)</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">Test</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">a</span><span class="p">):</span>
-        <span class="k">print</span><span class="p">(</span><span class="s2">&quot;类 __init__&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;类 __init__&quot;</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="k">print</span><span class="p">(</span><span class="s2">&quot;类 __call__&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;类 __call__&quot;</span><span class="p">)</span>
 
 <span class="n">t</span> <span class="o">=</span> <span class="n">Test</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-<span class="k">print</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
 </code></pre></div>
 
 <p>场景就是需要你对变量做强制性检查.</p>
@@ -86,13 +86,13 @@
 
 <p>注释掉最后两行代码,会发现如下输出  </p>
 
-<div class="codehilite"><pre><span></span><code><span class="err">运行到</span> <span class="n">Type</span>
-<span class="err">运行到</span> <span class="n">TypeCheckMeta</span>
-<span class="err">运行到</span> <span class="n">Test</span>
+<div class="codehilite"><pre><span></span><code><span class="n">运行到</span> <span class="n">Type</span>
+<span class="n">运行到</span> <span class="n">TypeCheckMeta</span>
+<span class="n">运行到</span> <span class="n">Test</span>
 <span class="nb">set</span> <span class="nb">type</span> <span class="o">&lt;</span><span class="k">class</span> <span class="err">&#39;</span><span class="nc">str</span><span class="s1">&#39;&gt;</span>
 <span class="nb">set</span> <span class="nb">type</span> <span class="o">&lt;</span><span class="k">class</span> <span class="err">&#39;</span><span class="nc">int</span><span class="s1">&#39;&gt;</span>
-<span class="err">元类</span> <span class="fm">__new__</span>
-<span class="err">元类</span> <span class="fm">__init__</span>
+<span class="n">元类</span> <span class="fm">__new__</span>
+<span class="n">元类</span> <span class="fm">__init__</span>
 </code></pre></div>
 
 <p>首先,Python在加载的时候扫过整个文件.遇到类定义的时候如下执行:
@@ -106,7 +106,7 @@
 <p>现在我们来看看执行的  </p>
 
 <div class="codehilite"><pre><span></span><code><span class="n">t</span> <span class="o">=</span> <span class="n">Test</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-<span class="k">print</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
 </code></pre></div>
 
 <ol>
@@ -199,5 +199,15 @@
   gtag('js', new Date());
   gtag('config', 'UA-106796420-1');
 </script>
+<script>
+var _hmt = _hmt || [];
+(function() {
+  var hm = document.createElement("script");
+  hm.src = "https://hm.baidu.com/hm.js?2e8594e80b736182ce88fcd89a36402d";
+  var s = document.getElementsByTagName("script")[0];
+  s.parentNode.insertBefore(hm, s);
+})();
+</script>
+
 
 </html>
